@@ -10,9 +10,9 @@ SAMPLETIME = 2
 class Encoder(object):
     def __init__(self, pin):
         self._value = 0
-        encoder = DigitalInputDevice(pin, pull_up=True)
-        encoder.when_activated = self._increment
-        encoder.when_deactivated = self._increment
+        self._encoder = DigitalInputDevice(pin, pull_up=True)
+        self._encoder.when_activated = self._increment
+        self._encoder.when_deactivated = self._increment
         print("Init")
 
     def reset(self):

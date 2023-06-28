@@ -2,12 +2,18 @@
 
 import rospy
 from geometry_msgs.msg import Twist
-
 from PCA9685 import PCA9685
+from gpiozero import DigitalInputDevice
+from time import sleep
 
+
+# Init the PCA9685 Hat
+# TODO I should be able to move these two lines to __init__ in Driver, but then how do I use 'pwm' in Motor?
 pwm = PCA9685(0x40, debug=False)
 pwm.setPWMFreq(50)
 
+# PID values
+KP = 5
 
 def _clip(value, minimum, maximum):
     """Ensure value is between minimum and maximum."""
@@ -18,47 +24,97 @@ def _clip(value, minimum, maximum):
         return maximum
     return value
 
+
+class Encoder:
+    def __init__(self, pin):
+        self._value = 0
+        self._encoder = DigitalInputDevice(pin, pull_up=True)
+        self._encoder.when_activated = self._increment
+        self._encoder.when_deactivated = self._increment
+        print("Encoder Init")
+
+    def reset(self):
+        self._value = 0
+
+    def _increment(self):
+        self._value += 1
+        #print("Encoder inc")
+
+    @property
+    def value(self):
+        return self._value
+
+
 class Motor:
     def __init__(self, pwm_pin, forward_pin, backward_pin):
         self._pwm_pin = pwm_pin
         self._forward_pin = forward_pin
         self._backward_pin = backward_pin
+        self._power = 0
 
-    def move(self, speed_percent):
-        speed = _clip(abs(speed_percent), 0, 100)
-        pwm.setDutycycle(self._pwm_pin, speed)
+    def move(self, requested_speed, ticks):
+        # 43 ticks per turn and 217mm per turn = 0.0050465 meters per tick
+        actual_speed = ticks * (0.217 / 43)
 
-        #print("Move {:0.2f} {:0.2f}% {:0.2f}%".format(self._pwm_pin, speed_percent, speed))
+        # Our encoders dont recognise backwards, but if _power is negative, they will be going backwards
+        if self._power < 0:
+            actual_speed = -actual_speed
+
+        error = requested_speed - actual_speed
+        self._power += error * KP
+
+        self._power = _clip(self._power, -1, 1)
+
+        # If we should be stoped, just stop
+        if requested_speed == 0:
+            self._power = 0
+
+        # Duty cycle is positive between 0 and 100
+        duty_cycle = abs(self._power * 100)
+
+        # Less than 30 wont move the motors
+        if duty_cycle < 30:
+            duty_cycle = 0
+
+        pwm.setDutycycle(self._pwm_pin, duty_cycle)
+
+        print("Motor: pin {:0.0f}, requested speed {: 0.2f}, ticks {:2.0f}, actual_speed {: 0.2f}, error {: 0.2f}, power {: 0.2f}, duty {:2.0f}".format(self._pwm_pin, requested_speed, ticks, actual_speed, error, self._power, duty_cycle))
 
         # Positive speeds move wheels forward, negative speeds 
         # move wheels backward
-        if speed_percent < 0:
+        if self._power < 0:
             pwm.setLevel(self._forward_pin, 0)
             pwm.setLevel(self._backward_pin, 1)
         else:
             pwm.setLevel(self._forward_pin, 1)
             pwm.setLevel(self._backward_pin, 0)
 
+
 class Driver:
     def __init__(self):
         rospy.init_node('driver')
 
         self._last_received = rospy.get_time()
-        self._timeout = rospy.get_param('~timeout', 3) # Original 2
-        self._rate = rospy.get_param('~rate', 10) # Original 10
-        self._max_speed = rospy.get_param('~max_speed', 0.5)
+        self._timeout = rospy.get_param('~timeout', 5) # Original 2
+        self._rate = rospy.get_param('~rate', 5) # Original 10
+        self._max_speed = rospy.get_param('~max_speed', 0.1)
         self._wheel_base = rospy.get_param('~wheel_base', 0.091)
 
         # Assign PCA9685 pins to motors.
-        self._left_motor = Motor(0, 2, 1)
-        self._right_motor = Motor(5, 4, 3)
-        self._left_speed_percent = 0
-        self._right_speed_percent = 0
+        self._left_motor = Motor(5, 4, 3)
+        self._right_motor = Motor(0, 2, 1)
+
+        # Setup wheel encoders
+        self._left_enc = Encoder(23)
+        self._right_enc = Encoder(24)
+
+        self._linear = 0
+        self._angular = 0
+        self._left_speed = 0
+        self._right_speed = 0
 
         # Setup subscriber for velocity twist message
-        rospy.Subscriber(
-            'cmd_vel', Twist, self.velocity_received_callback)
-
+        rospy.Subscriber('cmd_vel', Twist, self.velocity_received_callback)
 
     def velocity_received_callback(self, message):
         """Handle new velocity command message."""
@@ -66,26 +122,12 @@ class Driver:
         self._last_received = rospy.get_time()
 
         # Extract linear and angular velocities from the message
-        linear = message.linear.x
-        angular = message.angular.z
+        self._linear = _clip(message.linear.x, -self._max_speed, self._max_speed)
+        self._angular = _clip(message.angular.z, -self._max_speed, self._max_speed)
 
         # Calculate wheel speeds in m/s
-        left_speed = linear - angular # *self._wheel_base/2
-        right_speed = linear + angular # *self._wheel_base/2
-
-        # Ideally we'd now use the desired wheel speeds along
-        # with data from wheel speed sensors to come up with the
-        # power we need to apply to the wheels, but we don't have
-        # wheel speed sensors. Instead, we'll simply convert m/s
-        # into percent of maximum wheel speed, which gives us a
-        # duty cycle that we can apply to each motor.
-        self._left_speed_percent = (100 * left_speed/self._max_speed)
-        self._right_speed_percent = (100 * right_speed/self._max_speed)
-
-        print("Linear {:0.2f} Angular {:0.2f}".format(linear, angular))
-        print("Left_speed {:0.2f} {:0.2f} %".format(left_speed, self._left_speed_percent))
-        print("Right_speed {:0.2f} {:0.2f} %".format(right_speed, self._right_speed_percent))
-
+        self._left_speed = self._linear - self._angular # *self._wheel_base/2
+        self._right_speed = self._linear + self._angular # *self._wheel_base/2
 
     def run(self):
         """The control loop of the driver."""
@@ -93,16 +135,20 @@ class Driver:
         rate = rospy.Rate(self._rate)
 
         while not rospy.is_shutdown():
-            # If we haven't received new commands for a while, we
-            # may have lost contact with the commander-- stop
-            # moving
+            # If we haven't received new commands for a while, we may have lost contact -- stop moving
             delay = rospy.get_time() - self._last_received
             if delay < self._timeout:
-                self._left_motor.move(self._left_speed_percent)
-                self._right_motor.move(self._right_speed_percent)
+                self._left_motor.move(self._left_speed, self._left_enc.value)
+                self._right_motor.move(self._right_speed, self._right_enc.value)
             else:
-                self._left_motor.move(0)
-                self._right_motor.move(0)
+                self._left_motor.move(0, self._left_enc.value)
+                self._right_motor.move(0, self._right_enc.value)
+
+            print("Driver: Linear {: 0.2f}, Angular {: 0.2f}".format(self._linear, self._angular))
+            print("")
+
+            self._left_enc.reset()
+            self._right_enc.reset()
 
             rate.sleep()
 
