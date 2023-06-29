@@ -13,7 +13,7 @@ pwm = PCA9685(0x40, debug=False)
 pwm.setPWMFreq(50)
 
 # PID values
-KP = 5
+KP = 2
 
 def _clip(value, minimum, maximum):
     """Ensure value is between minimum and maximum."""
@@ -52,9 +52,9 @@ class Motor:
         self._backward_pin = backward_pin
         self._power = 0
 
-    def move(self, requested_speed, ticks):
+    def move(self, requested_speed, ticks, rate):
         # 43 ticks per turn and 217mm per turn = 0.0050465 meters per tick
-        actual_speed = ticks * (0.217 / 43)
+        actual_speed = ticks * (0.217 / 43) * rate
 
         # Our encoders dont recognise backwards, but if _power is negative, they will be going backwards
         if self._power < 0:
@@ -78,10 +78,11 @@ class Motor:
 
         pwm.setDutycycle(self._pwm_pin, duty_cycle)
 
-        print("Motor: pin {:0.0f}, requested speed {: 0.2f}, ticks {:2.0f}, actual_speed {: 0.2f}, error {: 0.2f}, power {: 0.2f}, duty {:2.0f}".format(self._pwm_pin, requested_speed, ticks, actual_speed, error, self._power, duty_cycle))
+        print("Motor: pin {:0.0f}, rate {:0.0f}, requested speed {: 0.2f}, ticks {:2.0f}, " \
+            "actual_speed {: 0.2f}, error {: 0.2f}, power {: 0.2f}, duty {:2.0f}".format(self._pwm_pin, \
+            rate, requested_speed, ticks, actual_speed, error, self._power, duty_cycle))
 
-        # Positive speeds move wheels forward, negative speeds 
-        # move wheels backward
+        # Positive speeds move wheels forward, negative speeds move wheels backward
         if self._power < 0:
             pwm.setLevel(self._forward_pin, 0)
             pwm.setLevel(self._backward_pin, 1)
@@ -95,10 +96,10 @@ class Driver:
         rospy.init_node('driver')
 
         self._last_received = rospy.get_time()
-        self._timeout = rospy.get_param('~timeout', 5) # Original 2
+        self._timeout = rospy.get_param('~timeout', 2) # Original 2
         self._rate = rospy.get_param('~rate', 5) # Original 10
-        self._max_speed = rospy.get_param('~max_speed', 0.1)
-        self._wheel_base = rospy.get_param('~wheel_base', 0.091)
+        self._max_speed = rospy.get_param('~max_speed', 0.5)
+        self._wheel_base = rospy.get_param('~wheel_base', 0.130)
 
         # Assign PCA9685 pins to motors.
         self._left_motor = Motor(5, 4, 3)
@@ -122,12 +123,14 @@ class Driver:
         self._last_received = rospy.get_time()
 
         # Extract linear and angular velocities from the message
-        self._linear = _clip(message.linear.x, -self._max_speed, self._max_speed)
-        self._angular = _clip(message.angular.z, -self._max_speed, self._max_speed)
+        #self._linear = _clip(message.linear.x, -self._max_speed, self._max_speed)
+        #self._angular = _clip(message.angular.z, -self._max_speed, self._max_speed)
+        self._linear = message.linear.x
+        self._angular = message.angular.z
 
         # Calculate wheel speeds in m/s
-        self._left_speed = self._linear - self._angular # *self._wheel_base/2
-        self._right_speed = self._linear + self._angular # *self._wheel_base/2
+        self._left_speed = self._linear - self._angular * self._wheel_base / 2
+        self._right_speed = self._linear + self._angular * self._wheel_base / 2
 
     def run(self):
         """The control loop of the driver."""
@@ -138,11 +141,11 @@ class Driver:
             # If we haven't received new commands for a while, we may have lost contact -- stop moving
             delay = rospy.get_time() - self._last_received
             if delay < self._timeout:
-                self._left_motor.move(self._left_speed, self._left_enc.value)
-                self._right_motor.move(self._right_speed, self._right_enc.value)
+                self._left_motor.move(self._left_speed, self._left_enc.value, self._rate)
+                self._right_motor.move(self._right_speed, self._right_enc.value, self._rate)
             else:
-                self._left_motor.move(0, self._left_enc.value)
-                self._right_motor.move(0, self._right_enc.value)
+                self._left_motor.move(0, self._left_enc.value, self._rate)
+                self._right_motor.move(0, self._right_enc.value, self._rate)
 
             print("Driver: Linear {: 0.2f}, Angular {: 0.2f}".format(self._linear, self._angular))
             print("")
