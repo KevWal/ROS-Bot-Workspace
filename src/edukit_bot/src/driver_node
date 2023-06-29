@@ -13,7 +13,9 @@ pwm = PCA9685(0x40, debug=False)
 pwm.setPWMFreq(50)
 
 # PID values
-KP = 2
+KP = 1.75
+KD = 0.25
+KI = 0.05
 
 def _clip(value, minimum, maximum):
     """Ensure value is between minimum and maximum."""
@@ -51,6 +53,8 @@ class Motor:
         self._forward_pin = forward_pin
         self._backward_pin = backward_pin
         self._power = 0
+        self._prev_error = 0
+        self._sum_error = 0
 
     def move(self, requested_speed, ticks, rate):
         # 43 ticks per turn and 217mm per turn = 0.0050465 meters per tick
@@ -61,7 +65,7 @@ class Motor:
             actual_speed = -actual_speed
 
         error = requested_speed - actual_speed
-        self._power += error * KP
+        self._power += error * KP + self._prev_error * KD + self._sum_error * KI
 
         self._power = _clip(self._power, -1, 1)
 
@@ -72,15 +76,11 @@ class Motor:
         # Duty cycle is positive between 0 and 100
         duty_cycle = abs(self._power * 100)
 
-        # Less than 30 wont move the motors
-        if duty_cycle < 30:
+        # Less than 25 wont move the motors
+        if duty_cycle < 25:
             duty_cycle = 0
 
         pwm.setDutycycle(self._pwm_pin, duty_cycle)
-
-        print("Motor: pin {:0.0f}, rate {:0.0f}, requested speed {: 0.2f}, ticks {:2.0f}, " \
-            "actual_speed {: 0.2f}, error {: 0.2f}, power {: 0.2f}, duty {:2.0f}".format(self._pwm_pin, \
-            rate, requested_speed, ticks, actual_speed, error, self._power, duty_cycle))
 
         # Positive speeds move wheels forward, negative speeds move wheels backward
         if self._power < 0:
@@ -89,6 +89,14 @@ class Motor:
         else:
             pwm.setLevel(self._forward_pin, 1)
             pwm.setLevel(self._backward_pin, 0)
+
+        print("Motor: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.2f}, ticks {:2.0f}, " \
+            "actual spd {: 0.2f}, err {: 0.2f}, prev err {: 0.2f}, sum err {: 0.2f}, pwr {: 0.2f}, " \
+            " duty {:2.0f}".format(self._pwm_pin, rate, requested_speed, ticks, actual_speed, \
+            error, self._prev_error, self._sum_error, self._power, duty_cycle))
+
+        self._prev_error = error
+        self._sum_error += error
 
 
 class Driver:
