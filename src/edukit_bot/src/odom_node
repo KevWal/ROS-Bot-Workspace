@@ -7,10 +7,10 @@ from nav_msgs.msg import Odometry
 from tf.broadcaster import TransformBroadcaster
 from std_msgs.msg import Int32
 
-from math import sin, cos, pi
+from math import asin, sin, cos, pi
 
 """
-   diff_tf.py - follows the output of a wheel encoder and creates tf and odometry messages.
+   odom_node - follows the output of a wheel encoder and creates tf and odometry messages.
    Reworked from https://github.com/jfstepha/differential-drive
 """
 
@@ -21,11 +21,11 @@ class Odom:
         rospy.loginfo("-I- %s started" % self.nodename)
         
         # Parameters
-        self.rate = rospy.get_param('odom_rate', 10)  # the rate at which to publish the transform
+        self.rate = rospy.get_param('odom_rate', 15)  # the rate at which to publish the transform
         self.driver_rate = rospy.get_param('driver_rate', 5)  # the rate ticks are published
-        # 43 ticks per turn and 217mm per turn
-        self.ticks_meter = float(rospy.get_param('ticks_meter', 1000 / 217 * 43))  # encoder ticks per meter of travel
-        self.base_width = float(rospy.get_param('~base_width', 0.130)) # The wheel base width in meters
+        # 40 ticks per turn and 217mm per turn
+        self.ticks_meter = float(rospy.get_param('ticks_meter', 1000 / 217 * 40))  # encoder ticks per meter of travel
+        self.base_width = float(rospy.get_param('~base_width', 0.095)) # The wheel base width in meters
         
         self.base_frame_id = rospy.get_param('~base_frame_id','base_link') # the name of the base frame of the robot
         self.odom_frame_id = rospy.get_param('~odom_frame_id', 'odom') # the name of the odometry reference frame
@@ -75,8 +75,8 @@ class Odom:
         # Raise error if we haven't used the encoder value
         if self.left_updated:
             rospy.logerr("-I- %s Left encoder value skipped!" % self.nodename)
-        else:
-            print("L updated {:0.0f}".format(enc))
+        #else:
+        #    print("L updated {:0.0f}".format(enc))
         
         self.left = enc - self.prev_lencoder
         self.left_updated = True
@@ -95,8 +95,8 @@ class Odom:
         # Raise error if we haven't used the encoder value
         if self.right_updated:
             rospy.logerr("-I- %s Right encoder value skipped!" % self.nodename)
-        else:
-            print("R updated {:0.0f}".format(enc))
+        #else:
+        #    print("R updated {:0.0f}".format(enc))
         
         self.right = enc - self.prev_rencoder
         self.right_updated = True
@@ -143,14 +143,23 @@ class Odom:
             d = ( d_left + d_right ) / 2
             # this approximation works (in radians) for small angles
             th = ( d_right - d_left ) / self.base_width
+
+            #th feels wrong, only turning 50% as much as it should?
+            # does this help?  https://github.com/lbrombach/practical_chapters/blob/master/chapter11/encoder_odom_publisher.cpp
+            #try:
+            #    th = asin( (d_right - d_left) / self.base_width)
+            #except ValueError:  # Occasionally get math domain error
+            #    th = 0
+            #    print("math domain error")
+
             # calculate velocities
             elapsed = 1.0 / self.driver_rate
             dx = d / elapsed  # Change in linear x
             dr = th / elapsed  # Change is angular z rotation
             
-            print("Odom: enc_l {:0.0f}, enc_r {:0.0f}, d_l {:0.2f}, d_r {:0.2f}, d {:0.2f}, th {: 0.2f}, " \
-                "e {:0.2f}, e_t {:0.2f}, dx {:0.2f}, dr {:0.2f}".format(left, right, d_left, d_right, d, th, \
-                elapsed, elapsed_t, dx, dr))
+            #print("Odom: enc_l {: 3.0f}, enc_r {: 3.0f}, d_l {: 0.2f}, d_r {: 0.2f}, d {: 0.2f}, th {: 0.2f}, " \
+            #    "e {:0.2f}, e_t {:0.2f}, dx {: 0.2f}, dr {: 0.2f}".format(left, right, d_left, d_right, d, th, \
+            #    elapsed, elapsed_t, dx, dr))
 
             if (d != 0):
                 # calculate distance traveled in x and y
@@ -161,8 +170,11 @@ class Odom:
                 self.y = self.y + ( sin( self.th ) * x + cos( self.th ) * y )
             #if( th != 0):
                 self.th = self.th + th
-               
-                print("Odom: x {:0.2f}, y {:0.2f}, self.x {:0.2f}, self.y {:0.2f}, self.th {: 0.2f}" \
+
+                print("Odom: enc_l {: 3.0f}, enc_r {: 3.0f}, d_l {: 0.2f}, d_r {: 0.2f}, d {: 0.2f}, th {: 0.2f}, " \
+                    "e {:0.2f}, e_t {:0.2f}, dx {: 0.2f}, dr {: 0.2f}".format(left, right, d_left, d_right, d, th, \
+                    elapsed, elapsed_t, dx, dr))               
+                print("Odom: x {: 0.2f}, y {: 0.2f}, self.x {: 0.2f}, self.y {: 0.2f}, self.th {: 0.2f}" \
                     .format(x, y, self.x, self.y, self.th))
 
             # publish the transform information

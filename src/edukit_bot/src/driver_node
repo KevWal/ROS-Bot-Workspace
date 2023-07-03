@@ -18,9 +18,9 @@ pwm = PCA9685(0x40, debug=False)
 pwm.setPWMFreq(50)
 
 # PID values
-KP = 1.75
-KD = 0.25
-KI = 0.05
+KP = 1.2 # Proportional
+KD = 0.1 # Previous error
+KI = 0.05 # Long term error
 
 def _clip(value, minimum, maximum):
     """Ensure value is between minimum and maximum."""
@@ -59,7 +59,7 @@ class Motor:
         self.last_enc_value = self.enc_value
 
         # 43 ticks per turn and 217mm per turn = 0.0050465 meters per tick
-        actual_speed = ticks * (0.217 / 43) * rate
+        actual_speed = ticks * (0.217 / 40) * rate
 
         error = requested_speed - actual_speed
         self.power += error * KP + self._prev_error * KD + self._sum_error * KI
