@@ -120,7 +120,7 @@ class Driver:
         self._max_speed = rospy.get_param('~max_speed', 0.5)
         self._wheel_base = rospy.get_param('~wheel_base', 0.130)
 
-        # Assign PCA9685 pins to motors.
+        # Assign PCA9685 pins to motors and GPIO pins to Encoders.
         self._left_motor = Motor(5, 4, 3, 23)
         self._right_motor = Motor(0, 2, 1, 24)
 
