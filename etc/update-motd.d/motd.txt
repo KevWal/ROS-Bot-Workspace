@@ -1,0 +1,13 @@
+
+/etc/update-motd.d/motd.txt
+
+Fan Control in /boot/firmware/usercfg.txt
+	dtoverlay=gpio-fan,gpiopin=19,temp=45000
+
+Activate workspace: source ~/edukit_bot_ws/devel/setup.sh
+Launch file: roslaunch bringup bringup.launch
+
+Launch just driver_node: rosrun edukit_bot driver_node
+Launch just odom_node: rosrun edukit_bot odom_node
+
+Multi Machine config in ~/.bashrc
