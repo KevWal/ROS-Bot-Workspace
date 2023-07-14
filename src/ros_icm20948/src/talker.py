@@ -12,8 +12,9 @@ import qwiic_icm20948
 def icm20948_node():
 
     # Initialize ROS node
-    raw_pub = rospy.Publisher('icm20948/raw', Imu, queue_size=10)
-    mag_pub = rospy.Publisher('icm20948/mag', MagneticField, queue_size=10)
+    #raw_pub = rospy.Publisher('imu/data_raw', Imu, queue_size=10)
+    raw_pub = rospy.Publisher('raw_imu', Imu, queue_size=10)
+    mag_pub = rospy.Publisher('imu/mag', MagneticField, queue_size=10)
     rospy.init_node('icm20948')
 
     rate = rospy.Rate(100)
@@ -31,6 +32,9 @@ def icm20948_node():
         if IMU.dataReady():
             IMU.getAgmt()
             raw_msg = Imu()
+
+            raw_msg.header.frame_id = "base_imu"
+
             raw_msg.header.stamp = rospy.Time.now()
 	            
             raw_msg.orientation.w = 0
@@ -53,6 +57,7 @@ def icm20948_node():
             raw_pub.publish(raw_msg)
                 
             mag_msg = MagneticField()
+            mag_msg.header.frame_id = "base_imu"
             mag_msg.header.stamp = rospy.Time.now()
             mag_msg.magnetic_field.x = IMU.mxRaw
             mag_msg.magnetic_field.y = IMU.myRaw

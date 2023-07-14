@@ -1,6 +1,0 @@
-<launch>
-  <include file="$(find bringup)/launch/includes/teleop.launch.xml" />
-  <include file="$(find edukit_bot)/launch/control.launch" />
-  <include file="$(find ldlidar_ros)/launch/ld19.launch" />
-  <include file="$(find ros_icm20948)/launch/icm20948.launch" />
-</launch>

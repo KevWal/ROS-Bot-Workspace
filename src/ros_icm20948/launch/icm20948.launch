@@ -1,4 +1,4 @@
 <launch>
-    <node name="ros_icm20948" pkg="ros_icm20948" type="talker.py" respawn="true" respawn_delay="2">
-    </node>
+    <node name="ros_icm20948" pkg="ros_icm20948" type="talker.py" respawn="true" respawn_delay="2" />
+    <node name="base_to_imu" pkg="tf" type="static_transform_publisher" args="-0.04 0.0 0.07 1.571 0.0 0.0 base_link base_imu 50"/>
 </launch>

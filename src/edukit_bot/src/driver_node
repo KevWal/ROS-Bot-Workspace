@@ -18,9 +18,9 @@ pwm = PCA9685(0x40, debug=False)
 pwm.setPWMFreq(50)
 
 # PID values
-KP = 1.2 # Proportional
-KD = 0.1 # Previous error
-KI = 0.05 # Long term error
+KP = 0.5 # Proportional
+KD = 0.05 # Previous error
+KI = 0.01 # Long term error
 
 def _clip(value, minimum, maximum):
     """Ensure value is between minimum and maximum."""
@@ -64,6 +64,9 @@ class Motor:
         error = requested_speed - actual_speed
         self.power += error * KP + self._prev_error * KD + self._sum_error * KI
 
+        # Remove pid by un commenting this for debug
+        #self.power = requested_speed * 4
+
         self.power = _clip(self.power, -1, 1)
 
         # If we should be stoped, just stop
@@ -87,10 +90,10 @@ class Motor:
             pwm.setLevel(self._forward_pin, 1)
             pwm.setLevel(self._backward_pin, 0)
 
-        print("Motor: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.2f}, ticks {:2.0f}, " \
-            "actual spd {: 0.2f}, err {: 0.2f}, prev err {: 0.2f}, sum err {: 0.2f}, pwr {: 0.2f}, " \
-            " duty {:2.0f}".format(self._pwm_pin, rate, requested_speed, ticks, actual_speed, \
-            error, self._prev_error, self._sum_error, self.power, duty_cycle))
+        #print("Motor: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.2f}, ticks {:2.0f}, " \
+        #    "actual spd {: 0.2f}, err {: 0.2f}, prev err {: 0.2f}, sum err {: 0.2f}, pwr {: 0.2f}, " \
+        #    " duty {:2.0f}".format(self._pwm_pin, rate, requested_speed, ticks, actual_speed, \
+        #    error, self._prev_error, self._sum_error, self.power, duty_cycle))
 
         self._prev_error = error
         self._sum_error += error
@@ -121,8 +124,8 @@ class Driver:
         self._wheel_base = rospy.get_param('~wheel_base', 0.130)
 
         # Assign PCA9685 pins to motors and GPIO pins to Encoders.
-        self._left_motor = Motor(5, 4, 3, 23)
-        self._right_motor = Motor(0, 2, 1, 24)
+        self._left_motor = Motor(5, 4, 3, 24)
+        self._right_motor = Motor(0, 2, 1, 23)
 
         # Setup Publishers for encoders
         self._leftPub = rospy.Publisher('lwheel_ticks', Int32, queue_size=10)
@@ -175,7 +178,7 @@ class Driver:
             self._leftPub.publish(self._left_motor.enc_value)
             self._rightPub.publish(self._right_motor.enc_value)
 
-            print("")
+            #print("")
             rate.sleep()
 
 
