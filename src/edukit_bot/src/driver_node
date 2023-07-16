@@ -15,10 +15,10 @@ from time import sleep
 # Init the PCA9685 Hat
 # TODO I should be able to move these two lines to __init__ in Driver, but then how do I use 'pwm' in Motor?
 pwm = PCA9685(0x40, debug=False)
-pwm.setPWMFreq(50)
+pwm.setPWMFreq(25)
 
 # PID values
-KP = 0.5 # Proportional
+KP = 0.45 # Proportional
 KD = 0.05 # Previous error
 KI = 0.01 # Long term error
 
@@ -76,8 +76,8 @@ class Motor:
         # Duty cycle is positive between 0 and 100
         duty_cycle = abs(self.power * 100)
 
-        # Less than 25 wont move the motors
-        if duty_cycle < 25:
+        # Less than 15 wont move the motors
+        if duty_cycle < 15:
             duty_cycle = 0
 
         pwm.setDutycycle(self._pwm_pin, duty_cycle)

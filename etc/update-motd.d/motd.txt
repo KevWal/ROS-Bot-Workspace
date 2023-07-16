@@ -8,3 +8,6 @@ ROS & Workspace setup in ~/.bashrc
 Multi Machine config in ~/.bashrc
 
 Launch file: roslaunch edukit_bot bringup.launch
+
+Map saver: rosrun map_server map_saver -f my_map
+

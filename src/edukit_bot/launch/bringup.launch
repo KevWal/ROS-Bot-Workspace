@@ -1,7 +1,11 @@
+<?xml version="1.0"?>
+
 <launch>
 
 <!-- Everything launched / configured from here, no other launch files used -->
 
+<!-- Static TF for base_link to base_footprint -->
+  <node name="static_footprint_to_link" pkg="tf" type="static_transform_publisher" args="0.00 0.0 0.0 0.0 0.0 0.0 base_footprint base_link 50" />
 
 <!-- Joystick Node -->
 <!--Publishes /joy (sensor_msgs/Joy) --> 
@@ -15,8 +19,8 @@
 <!-- Subscribes /joy (sensor_msgs/Joy) -->
 <!-- Publishes /cmd_vel (geometry_msgs/Twist) -->
   <node pkg="teleop_twist_joy" type="teleop_node" name="joystick_to_twist" output="screen">
-    <param name="scale_linear" value="0.25" />
-    <param name="scale_angular" value="3.14" />
+    <param name="scale_linear" value="0.2" />
+    <param name="scale_angular" value="0.8" />
   </node>
 
 
@@ -30,7 +34,7 @@
 <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
 <!-- Publishes /raw_odom (nav_msgs/Odometry) with frame_id odom and child_frame_id base_link and -->
 <!-- Publishes TF for frame_id odom to child_frame_id base_link-->
-  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" />
+<!--  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" /> -->
 
 
 <!-- Lidar Node -->
@@ -40,15 +44,15 @@
     <param name="serial_baudrate" value="230400"/>
     <!-- more info in ldlidar_ros/launch/ld19.launch -->
   </node>
-<!-- Static TF for base_laser to base_link -->
-  <node name="base_to_laser" pkg="tf" type="static_transform_publisher" args="0.04 0.0 0.11 1.571 0.0 0.0 base_link base_laser 50" />
+<!-- Static TF for laser_link to base_link -->
+  <node name="static_base_to_laser" pkg="tf" type="static_transform_publisher" args="0.04 0.0 0.11 1.571 0.0 0.0 base_link base_laser 50" />
 
 
 <!-- IMU Node -->
 <!-- Publishes /raw_imu (sensor_msgs/Imu) and /imu/mag (sensor_msgs/MagneticField) with frame_id base_imu -->
   <node pkg="ros_icm20948" type="talker.py" name="ros_icm20948" respawn="true" respawn_delay="2" output="screen" />
 <!-- Static TF for base_imu to base_link -->
-  <node name="base_to_imu" pkg="tf" type="static_transform_publisher" args="-0.04 0.0 0.07 1.571 0.0 0.0 base_link base_imu 50" />
+  <node name="static_base_to_imu" pkg="tf" type="static_transform_publisher" args="-0.04 0.0 0.07 1.571 0.0 0.0 base_link base_imu 50" />
 
 
 <!-- IMU Calibration -->
