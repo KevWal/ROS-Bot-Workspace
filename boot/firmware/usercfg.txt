@@ -3,3 +3,7 @@
 # configuration files on the boot partition.
 
 dtoverlay=gpio-fan,gpiopin=19,temp=45000
+
+dtoverlay=rotary-encoder,pin_a=5,pin_b=6,relative_axis=1,steps-per-period=1
+dtoverlay=rotary-encoder,pin_a=23,pin_b=24,relative_axis=1,steps-per-period=1
+

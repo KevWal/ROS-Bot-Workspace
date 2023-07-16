@@ -9,58 +9,40 @@ from time import sleep
 import signal
 import sys
 
-#encoder_pin = 23
-pwm_pin = 5
-fwd_pin = 4
-bwd_pin = 3
+encoder_1_pin = 23
+encoder_2_pin = 24
 
-#encoder_pin = 24
-#pwm_pin = 0
-#fwd_pin = 1
-#bwd_pin = 2
-
-power = 100
-enc_value = 0
+enc_1_value = 0
+enc_2_value = 0
 
 def signal_handler(sig, frame):
-    pwm.setDutycycle(pwm_pin, 0)
+    print(enc_1_value)
+    print(enc_2_value)
     sys.exit(0)
 
-def enc_increment():
+def enc_1_increment():
     # Our encoders dont recognise backwards, but if power is negative, they will be going backwards
-    global enc_value
-    if power > 0:
-        enc_value += 1
-        #print("inc")
-    else:
-        enc_value -= 1
-        #print("dec")
+    global enc_1_value
+    enc_1_value += 1
+    print("inc_1")
 
-pwm = PCA9685(0x40, debug=False)
-pwm.setPWMFreq(50)
+def enc_2_increment():
+    # Our encoders dont recognise backwards, but if power is negative, they will be going backwards
+    global enc_2_value
+    enc_2_value += 1
+    print("inc_2")
+
+encoder_1 = DigitalInputDevice(encoder_1_pin, pull_up=True)
+encoder_1.when_activated = enc_1_increment
+encoder_1.when_deactivated = enc_1_increment
+
+encoder_2 = DigitalInputDevice(encoder_2_pin, pull_up=True)
+encoder_2.when_activated = enc_2_increment
+encoder_2.when_deactivated = enc_2_increment
 
 signal.signal(signal.SIGINT, signal_handler)
+signal.pause()
 
-#encoder = DigitalInputDevice(encoder_pin, pull_up=None)
-#encoder.when_activated = enc_increment
-#encoder.when_deactivated = enc_increment
-
-duty_cycle = abs(power)
-pwm.setDutycycle(pwm_pin, duty_cycle)
-
-# Positive speeds move wheels forward, negative speeds move wheels backward
-if power < 0:
-    pwm.setLevel(fwd_pin, 0)
-    pwm.setLevel(bwd_pin, 1)
-else:
-    pwm.setLevel(fwd_pin, 1)
-    pwm.setLevel(bwd_pin, 0)
-
-for x in range(1000):
-    sleep(0.01)
-    #print(enc_value)
-
-signal_handler(0,0)
 
 """
 class Motor:
