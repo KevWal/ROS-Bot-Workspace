@@ -4,6 +4,10 @@
 Fan Control in /boot/firmware/usercfg.txt
 	dtoverlay=gpio-fan,gpiopin=19,temp=45000
 
+Encoder overlay in /boot/firmware/usercfg.txt
+	dtoverlay=rotary-encoder,pin_a=23,pin_b=22,relative_axis=1,steps-per-period=1
+	dtoverlay=rotary-encoder,pin_a=24,pin_b=25,relative_axis=1,steps-per-period=1
+
 ROS & Workspace setup in ~/.bashrc
 Multi Machine config in ~/.bashrc
 
