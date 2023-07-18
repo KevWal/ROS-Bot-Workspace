@@ -34,7 +34,7 @@
 <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
 <!-- Publishes /raw_odom (nav_msgs/Odometry) with frame_id odom and child_frame_id base_link and -->
 <!-- Publishes TF for frame_id odom to child_frame_id base_link-->
-  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" />
+<!--  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" /> -->
 
 
 <!-- Lidar Node -->
