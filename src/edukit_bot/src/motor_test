@@ -9,215 +9,81 @@ from time import sleep
 import signal
 import sys
 
-#encoder_pin = 23
-pwm_pin = 5
-fwd_pin = 4
-bwd_pin = 3
+encoder_a_l = 23
+encoder_b_l = 22
+pwm_pin_l = 5
+fwd_pin_l = 4
+bwd_pin_l = 3
 
-#encoder_pin = 24
-#pwm_pin = 0
-#fwd_pin = 1
-#bwd_pin = 2
+encoder_a_r = 24
+encoder_b_r = 25
+pwm_pin_r = 0
+fwd_pin_r = 1
+bwd_pin_r = 2
 
-power = 100
-enc_value = 0
+power = 50
+enc_value_l = 0
+enc_value_r = 0
 
 def signal_handler(sig, frame):
-    pwm.setDutycycle(pwm_pin, 0)
+    pwm.setDutycycle(pwm_pin_l, 0)
+    pwm.setDutycycle(pwm_pin_r, 0)
+    print(enc_value_l, enc_value_r)
     sys.exit(0)
 
-def enc_increment():
+def enc_increment_l():
     # Our encoders dont recognise backwards, but if power is negative, they will be going backwards
-    global enc_value
+    global enc_value_l
     if power > 0:
-        enc_value += 1
+        enc_value_l += 1
         #print("inc")
     else:
-        enc_value -= 1
+        enc_value_l -= 1
         #print("dec")
+
+def enc_increment_r():
+    # Our encoders dont recognise backwards, but if power is negative, they will be going backwards
+    global enc_value_r
+    if power > 0:
+        enc_value_r += 1
+        #print("inc")
+    else:
+        enc_value_r -= 1
+        #print("dec")
+
 
 pwm = PCA9685(0x40, debug=False)
 pwm.setPWMFreq(50)
 
 signal.signal(signal.SIGINT, signal_handler)
 
-#encoder = DigitalInputDevice(encoder_pin, pull_up=None)
-#encoder.when_activated = enc_increment
-#encoder.when_deactivated = enc_increment
+encoder_l = DigitalInputDevice(encoder_a_l, pull_up=None)
+encoder_l.when_activated = enc_increment_l
+encoder_l.when_deactivated = enc_increment_l
+
+encoder_r = DigitalInputDevice(encoder_a_r, pull_up=None)
+encoder_r.when_activated = enc_increment_r
+encoder_r.when_deactivated = enc_increment_r
 
 duty_cycle = abs(power)
-pwm.setDutycycle(pwm_pin, duty_cycle)
+pwm.setDutycycle(pwm_pin_l, duty_cycle)
+pwm.setDutycycle(pwm_pin_r, duty_cycle)
 
 # Positive speeds move wheels forward, negative speeds move wheels backward
 if power < 0:
-    pwm.setLevel(fwd_pin, 0)
-    pwm.setLevel(bwd_pin, 1)
+    pwm.setLevel(fwd_pin_r, 0)
+    pwm.setLevel(bwd_pin_r, 1)
+    pwm.setLevel(fwd_pin_l, 0)
+    pwm.setLevel(bwd_pin_l, 1)
 else:
-    pwm.setLevel(fwd_pin, 1)
-    pwm.setLevel(bwd_pin, 0)
+    pwm.setLevel(fwd_pin_r, 1)
+    pwm.setLevel(bwd_pin_r, 0)
+    pwm.setLevel(fwd_pin_l, 1)
+    pwm.setLevel(bwd_pin_l, 0)
 
-for x in range(1000):
+for x in range(5000):
     sleep(0.01)
-    #print(enc_value)
+    print(enc_value_l, enc_value_r)
 
 signal_handler(0,0)
 
-"""
-class Motor:
-    def __init__(self, pwm_pin, forward_pin, backward_pin, encoder_pin):
-        self._pwm_pin = pwm_pin
-        self._forward_pin = forward_pin
-        self._backward_pin = backward_pin
-        self.power = 0
-
-        # PID vars
-        self._prev_error = 0
-        self._sum_error = 0
-
-        # Encoder init
-        self.enc_value = 0
-        self.last_enc_value = 0
-        self._encoder = DigitalInputDevice(encoder_pin, pull_up=True)
-        self._encoder.when_activated = self._enc_increment
-        self._encoder.when_deactivated = self._enc_increment
-        print("Motor Init")
-
-    def move(self, requested_speed, rate):
-        # Number of ticks since we last looked
-        ticks = self.enc_value - self.last_enc_value
-        #print("Motor: pin {:0.0f}, rate {:0.0f}, e_v {: 0.0f}, l_e_v {: 0.0f}, ticks {:2.0f}".format(self._pwm_pin, \
-        #    rate,  self.enc_value, self.last_enc_value, ticks))
-        self.last_enc_value = self.enc_value
-
-        # 43 ticks per turn and 217mm per turn = 0.0050465 meters per tick
-        actual_speed = ticks * (0.217 / 40) * rate
-
-        error = requested_speed - actual_speed
-        self.power += error * KP + self._prev_error * KD + self._sum_error * KI
-
-        # Remove pid by un commenting this for debug
-        #self.power = requested_speed * 4
-
-        self.power = _clip(self.power, -1, 1)
-
-        # If we should be stoped, just stop
-        if requested_speed == 0:
-            self.power = 0
-
-        # Duty cycle is positive between 0 and 100
-        duty_cycle = abs(self.power * 100)
-
-        # Less than 15 wont move the motors
-        if duty_cycle < 15:
-            duty_cycle = 0
-
-        pwm.setDutycycle(self._pwm_pin, duty_cycle)
-
-        # Positive speeds move wheels forward, negative speeds move wheels backward
-        if self.power < 0:
-            pwm.setLevel(self._forward_pin, 0)
-            pwm.setLevel(self._backward_pin, 1)
-        else:
-            pwm.setLevel(self._forward_pin, 1)
-            pwm.setLevel(self._backward_pin, 0)
-
-        #print("Motor: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.2f}, ticks {:2.0f}, " \
-        #    "actual spd {: 0.2f}, err {: 0.2f}, prev err {: 0.2f}, sum err {: 0.2f}, pwr {: 0.2f}, " \
-        #    " duty {:2.0f}".format(self._pwm_pin, rate, requested_speed, ticks, actual_speed, \
-        #    error, self._prev_error, self._sum_error, self.power, duty_cycle))
-
-        self._prev_error = error
-        self._sum_error += error
-
-    def enc_reset(self):
-        self.enc_value = 0
-
-    def _enc_increment(self):
-        # Our encoders dont recognise backwards, but if power is negative, they will be going backwards
-        if self.power > 0:
-            self.enc_value += 1
-            #print("inc")
-        else:
-            self.enc_value -= 1
-            #print("dec")
-
-
-class Driver:
-    def __init__(self):
-        rospy.init_node('driver')
-        self.nodename = rospy.get_name()
-        rospy.loginfo("-I- %s started" % self.nodename)
-
-        # Parameters
-        self._timeout = rospy.get_param('~timeout', 2) # Original 2
-        self._rate = rospy.get_param('driver_rate', 5) # Original 10
-        self._max_speed = rospy.get_param('~max_speed', 0.5)
-        self._wheel_base = rospy.get_param('~wheel_base', 0.130)
-
-        # Assign PCA9685 pins to motors and GPIO pins to Encoders.
-        self._left_motor = Motor(5, 4, 3, 24)
-        self._right_motor = Motor(0, 2, 1, 23)
-
-        # Setup Publishers for encoders
-        self._leftPub = rospy.Publisher('lwheel_ticks', Int32, queue_size=10)
-        self._rightPub = rospy.Publisher('rwheel_ticks', Int32, queue_size=10)
-
-        # Init variables
-        self._last_received = rospy.get_time()
-        self._linear = 0
-        self._angular = 0
-        self._left_speed = 0
-        self._right_speed = 0
-
-        # Setup subscriber for velocity twist message
-        rospy.Subscriber('cmd_vel', Twist, self.velocity_received_callback)
-
-    def velocity_received_callback(self, message):
-
-        self._last_received = rospy.get_time()
-
-        # Extract linear and angular velocities from the message
-        #self._linear = _clip(message.linear.x, -self._max_speed, self._max_speed)
-        #self._angular = _clip(message.angular.z, -self._max_speed, self._max_speed)
-        self._linear = message.linear.x
-        self._angular = message.angular.z
-
-        #print("Twist: Linear {: 0.2f}, Angular {: 0.2f}".format(self._linear, self._angular))
-        #print("")
-
-        # Calculate wheel speeds in m/s
-        self._left_speed = self._linear - self._angular * self._wheel_base / 2
-        self._right_speed = self._linear + self._angular * self._wheel_base / 2
-
-    def run(self):
-
-        rate = rospy.Rate(self._rate)
-
-        while not rospy.is_shutdown():
-            # If we haven't received new commands for a while, we may have lost contact -- stop moving
-            delay = rospy.get_time() - self._last_received
-            if delay < self._timeout:
-                self._left_motor.move(self._left_speed, self._rate)
-                self._right_motor.move(self._right_speed, self._rate)
-            else:
-                self._left_motor.move(0, self._rate)
-                self._right_motor.move(0, self._rate)
-
-            # Publish encoder values for Odom
-            self._leftPub.publish(self._left_motor.enc_value)
-            self._rightPub.publish(self._right_motor.enc_value)
-
-            #print("")
-            rate.sleep()
-
-
-def main():
-    driver = Driver()
-
-    # Run driver. This will block
-    driver.run()
-
-if __name__ == '__main__':
-    main()
-
-"""

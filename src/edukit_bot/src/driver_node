@@ -18,7 +18,7 @@ pwm = PCA9685(0x40, debug=False)
 pwm.setPWMFreq(25)
 
 # PID values
-KP = 0.45 # Proportional
+KP = 5 # Proportional
 KD = 0.05 # Previous error
 KI = 0.01 # Long term error
 
@@ -58,8 +58,9 @@ class Motor:
         #    rate,  self.enc_value, self.last_enc_value, ticks))
         self.last_enc_value = self.enc_value
 
-        # 43 ticks per turn and 217mm per turn = 0.0050465 meters per tick
-        actual_speed = ticks * (0.217 / 40) * rate
+        # Yellow TT Motor - 40 ticks per turn and 217mm per turn = 0.0050465 meters per tick
+        # Micro Metal Gear Motor - 1580 ticks per turn and 0.143m per turn
+        actual_speed = ticks * (0.143 / 1580) * rate
 
         error = requested_speed - actual_speed
         self.power += error * KP + self._prev_error * KD + self._sum_error * KI
@@ -90,10 +91,10 @@ class Motor:
             pwm.setLevel(self._forward_pin, 1)
             pwm.setLevel(self._backward_pin, 0)
 
-        #print("Motor: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.2f}, ticks {:2.0f}, " \
-        #    "actual spd {: 0.2f}, err {: 0.2f}, prev err {: 0.2f}, sum err {: 0.2f}, pwr {: 0.2f}, " \
-        #    " duty {:2.0f}".format(self._pwm_pin, rate, requested_speed, ticks, actual_speed, \
-        #    error, self._prev_error, self._sum_error, self.power, duty_cycle))
+        print("Motor: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.3f}, ticks {: 2.0f}, " \
+            "actual spd {: 0.3f}, err {: 0.3f}, prev err {: 0.3f}, sum err {: 0.3f}, pwr {: 0.2f}, " \
+            " duty {:2.0f}".format(self._pwm_pin, rate, requested_speed, ticks, actual_speed, \
+            error, self._prev_error, self._sum_error, self.power, duty_cycle))
 
         self._prev_error = error
         self._sum_error += error
@@ -118,14 +119,14 @@ class Driver:
         rospy.loginfo("-I- %s started" % self.nodename)
 
         # Parameters
-        self._timeout = rospy.get_param('~timeout', 2) # Original 2
-        self._rate = rospy.get_param('driver_rate', 5) # Original 10
-        self._max_speed = rospy.get_param('~max_speed', 0.5)
-        self._wheel_base = rospy.get_param('~wheel_base', 0.130)
+        self._timeout = rospy.get_param('timeout', 2)
+        self._rate = rospy.get_param('driver_rate', 10)
+        #self._max_speed = rospy.get_param('max_speed', 0.05)
+        self._wheel_base = rospy.get_param('wheel_base', 0.138)
 
         # Assign PCA9685 pins to motors and GPIO pins to Encoders.
-        self._left_motor = Motor(5, 4, 3, 24)
-        self._right_motor = Motor(0, 2, 1, 23)
+        self._left_motor = Motor(5, 4, 3, 23)
+        self._right_motor = Motor(0, 1, 2, 24)
 
         # Setup Publishers for encoders
         self._leftPub = rospy.Publisher('lwheel_ticks', Int32, queue_size=10)

@@ -4,25 +4,61 @@
 # Add to /boot/config.txt
 #  dtoverlay=rotary-encoder,pin_a=20,pin_b=21,relative_axis=1,steps-per-period=2
 # Tweak pins and steps to match the encoder
- 
+
+from PCA9685 import PCA9685 
 import evdev
 import time
 import signal
 import sys
+
+power = 100
+
+path = '/dev/input/by-path/platform-rotary@17-event'
+pwm_pin = 5
+fwd_pin = 4
+bwd_pin = 3
+
+#path = '/dev/input/by-path/platform-rotary@18-event'
+#pwm_pin = 0
+#fwd_pin = 1
+#bwd_pin = 2
+
+
+pwm = PCA9685(0x40, debug=False)
+pwm.setPWMFreq(50)
  
-d = evdev.InputDevice('/dev/input/by-path/platform-rotary@5-event')
+d = evdev.InputDevice(path)
 print('Rotary encoder device: {}'.format(d.name))
- 
-position = 0
+ticks = 0
+
+duty_cycle = abs(power)
+pwm.setDutycycle(pwm_pin, duty_cycle)
+
+# Positive speeds move wheels forward, negative speeds move wheels backward
+if power < 0:
+    pwm.setLevel(fwd_pin, 0)
+    pwm.setLevel(bwd_pin, 1)
+else:
+    pwm.setLevel(fwd_pin, 1)
+    pwm.setLevel(bwd_pin, 0)
+
 
 def signal_handler(sig, frame):
-    print('Position: {}'.format(position))
+    pwm.setDutycycle(pwm_pin, 0)
+    print('Ticks: {}'.format(ticks))
     sys.exit(0)
 
 signal.signal(signal.SIGINT, signal_handler)
+
+start = time.time()
  
 for e in d.read_loop():
     #print('Event: {}'.format(e))
     if e.type == evdev.ecodes.EV_REL:
-        position += e.value
+        ticks += e.value
+    if (time.time() - start) > 10:
+        break 
+
+pwm.setDutycycle(pwm_pin, 0)
+print('Ticks: {}'.format(ticks))
 

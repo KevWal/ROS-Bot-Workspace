@@ -19,8 +19,8 @@
 <!-- Subscribes /joy (sensor_msgs/Joy) -->
 <!-- Publishes /cmd_vel (geometry_msgs/Twist) -->
   <node pkg="teleop_twist_joy" type="teleop_node" name="joystick_to_twist" output="screen">
-    <param name="scale_linear" value="0.2" />
-    <param name="scale_angular" value="0.8" />
+    <param name="scale_linear" value="0.05" />
+    <param name="scale_angular" value="0.314" />
   </node>
 
 
@@ -34,7 +34,7 @@
 <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
 <!-- Publishes /raw_odom (nav_msgs/Odometry) with frame_id odom and child_frame_id base_link and -->
 <!-- Publishes TF for frame_id odom to child_frame_id base_link-->
-<!--  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" /> -->
+  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" />
 
 
 <!-- Lidar Node -->
@@ -50,7 +50,7 @@
 
 <!-- IMU Node -->
 <!-- Publishes /raw_imu (sensor_msgs/Imu) and /imu/mag (sensor_msgs/MagneticField) with frame_id base_imu -->
-  <node pkg="ros_icm20948" type="talker.py" name="ros_icm20948" respawn="true" respawn_delay="2" output="screen" />
+<!--  <node pkg="ros_icm20948" type="talker.py" name="ros_icm20948" respawn="true" respawn_delay="2" output="screen" /> -->
 <!-- Static TF for base_imu to base_link -->
   <node name="static_base_to_imu" pkg="tf" type="static_transform_publisher" args="-0.04 0.0 0.07 1.571 0.0 0.0 base_link base_imu 50" />
 
