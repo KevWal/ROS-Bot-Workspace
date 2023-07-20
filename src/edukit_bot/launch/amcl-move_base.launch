@@ -7,7 +7,7 @@
     <node name="map_server" pkg="map_server" type="map_server" args="$(find edukit_bot)/map/loft_map_2.yaml"/>
 
  <!-- Run AMCL --> 
-    <include file="$(find edukit_bot)/launch/amcl_omni.launch" />
+    <include file="$(find edukit_bot)/launch/amcl_diff.launch" />
 
  <!-- Run Move Base -->
    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">

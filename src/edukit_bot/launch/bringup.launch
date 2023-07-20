@@ -35,6 +35,7 @@
 <!-- Publishes /raw_odom (nav_msgs/Odometry) with frame_id odom and child_frame_id base_link and -->
 <!-- Publishes TF for frame_id odom to child_frame_id base_link-->
   <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" />
+<!--  <node name="static_odom_to_base" pkg="tf" type="static_transform_publisher" args="0.00 0.0 0.0 0.0 0.0 0.0 odom base_footprint 50" /> -->
 
 
 <!-- Lidar Node -->
