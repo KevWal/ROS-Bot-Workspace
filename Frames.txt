@@ -1,6 +1,6 @@
 world
   |
-  | static tf
+  | - static tf
   |
  map - Origin = Where mapping 0,0 is
   |
@@ -18,6 +18,6 @@ base_footprint
   |
 base_link
   /\
-  | | static tf 
+  | | - static tf 
   | |
 imu laser
