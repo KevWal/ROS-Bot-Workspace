@@ -1,0 +1,23 @@
+world
+  |
+  | static tf
+  |
+ map - Origin = Where mapping 0,0 is
+  |
+  |  - Can jump, only occasional updates, but shouldn't drift over time
+  |  - Typically done with laser_scan_matcher, amcl, gmapping
+  |
+ odom - Origin = Where robot initialised
+  |
+  |  - Can drift over time, but should be quick updates
+  |  - Typically done direct from odom node or via robot_pose_ekf etc
+  |
+base_footprint
+  |
+  |  - With no large roll or pitch changes can be a static tf
+  |
+base_link
+  /\
+  | | static tf 
+  | |
+imu laser
