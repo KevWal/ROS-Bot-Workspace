@@ -13,7 +13,7 @@ def icm20948_node():
 
     # Initialize ROS node
     #raw_pub = rospy.Publisher('imu/data_raw', Imu, queue_size=10)
-    raw_pub = rospy.Publisher('raw_imu', Imu, queue_size=10)
+    raw_pub = rospy.Publisher('imu/data', Imu, queue_size=10)
     mag_pub = rospy.Publisher('imu/mag', MagneticField, queue_size=10)
     rospy.init_node('icm20948')
 
