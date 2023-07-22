@@ -1,8 +1,13 @@
 <?xml version="1.0"?>
-
 <launch>
 
-<!-- Everything launched / configured from here, no other launch files used -->
+<!-- Everything launched / included from here - bringup.launch -->
+
+<!-- Set one, or other of these to true, but not both -->
+<!-- Create map using hector_mapping? -->
+  <arg name="hector_mapping" default="true"/>
+<!-- Navigate robot using move_base? -->
+  <arg name="move_base" default="false"/>
 
 <!-- Static TF for world to map -->
   <node name="static_world_to_map" pkg="tf" type="static_transform_publisher" args="0.00 0.0 0.0 0.0 0.0 0.0 world map 50" />
@@ -17,7 +22,6 @@
     <param name="deadzone" value="0.01" />
   </node>
 
-
 <!-- Joystick to Twist Node -->
 <!-- Subscribes /joy (sensor_msgs/Joy) -->
 <!-- Publishes /cmd_vel (geometry_msgs/Twist) -->
@@ -26,33 +30,29 @@
     <param name="scale_angular" value="0.314" />
   </node>
 
-
 <!-- Motor Driver Node -->
 <!-- Subscribes /cmd_vel (geometry_msgs/Twist) -->
 <!-- Publishes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
   <node pkg="edukit_bot" type="driver_node" name="driver" output="screen" />
 
-
 <!-- Odomotry Node -->
 <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
 <!-- Publishes /raw_odom (nav_msgs/Odometry) with frame_id odom and child_frame_id base_link and -->
 <!-- Publishes TF for frame_id odom to child_frame_id base_link-->
-<!--  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" /> -->
+<!-- TODO Stop this publishing tf -->
+  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" />
 
 <!-- If we dont have odom, just make it static -->
-  <node name="static_odom_to_base" pkg="tf" type="static_transform_publisher" args="0.00 0.0 0.0 0.0 0.0 0.0 odom base_footprint 50" />
-
+<!-- TODO Confirm we can delete this  <node name="static_odom_to_base" pkg="tf" type="static_transform_publisher" args="0.00 0.0 0.0 0.0 0.0 0.0 odom base_footprint 50" /> -->
 
 <!-- Lidar Node -->
 <!-- Publishes /scan (sensor_msgs/LaserScan) and /pointcloud2d (sensor_msgs/PointCloud) with frame_id base_laser -->
   <node pkg="ldlidar_ros" type="ldlidar_ros_node" name="ldlidar_publisher_ld19" output="screen">
     <param name="product_name" value="LDLiDAR_LD19"/>
     <param name="serial_baudrate" value="230400"/>
-    <!-- more info in ldlidar_ros/launch/ld19.launch -->
   </node>
 <!-- Static TF for laser_link to base_link -->
   <node name="static_base_to_laser" pkg="tf" type="static_transform_publisher" args="0.04 0.0 0.11 1.571 0.0 0.0 base_link base_laser 50" />
-
 
 <!-- IMU Node -->
 <!-- Publishes /imu/data (sensor_msgs/Imu) and /imu/mag (sensor_msgs/MagneticField) with frame_id base_imu -->
@@ -61,58 +61,57 @@
   <node name="static_base_to_imu" pkg="tf" type="static_transform_publisher" args="-0.04 0.0 0.07 1.571 0.0 0.0 base_link base_imu 50" />
 
 
-<!-- IMU Calibration -->
-<!-- Subscribes /raw_imu -->
-<!-- Publishes /imu/data_raw -->
-<!--  <node pkg="imu_calib" type="apply_calib" name="apply_calib" output="screen">
-    <param name="calib_file" value="$(find imu_calib)/param/imu_calib.yaml" />
-    <param name="calibrate_gyros" value="true" />
-  </node> -->
+<!-- Hector Mapping -->
+<group if="$(arg hector_mapping)">
+  <include file="$(find edukit_bot)/launch/hector_mapping.launch" />
+
+  <include file="$(find hector_geotiff_launch)/launch/geotiff_mapper.launch">
+    <arg name="trajectory_source_frame_name" value="scanmatcher_frame" />
+    <arg name="map_file_path" value="$(find edukit_bot)/map" />
+  </include>
+</group>
 
 
-<!-- Filter and fuse raw imu data -->
-<!-- Subscribes /imu/data_raw and /imu/mag -->
-<!-- Publishes /imu/data -->
-<!--  <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_madgwick" output="screen" respawn="false" >
-    <param name="fixed_frame" value="base_link" />
-    <param name="use_mag" value="true" />
-    <param name="publish_tf" value="false" />
-    <param name="use_magnetic_field_msg" value="true" /> 
-    <param name="world_frame" value="enu" />
-    <param name="orientation_stddev" value="0.05" />
-  </node> -->
-
-<!-- Join Odom and IMU data -->
-<!-- Subscribes /imu/data and /raw_odom -->
-<!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom and child_frame_id base_link and -->
-<!-- Publishes TF for frame_id odom to child_frame_id base_link-->
-<!--  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization"> 
-    <remap from="odometry/filtered" to="odom" />
-    <rosparam command="load" file="$(find edukit_bot)/param/robot_localization.yaml" />
-  </node> -->
-
-<!-- XX -->
-  <!-- <include file="$(find localization)/launch/odom_filter_tracker.launch" /> -->
-
-<!-- Map Server -->
-<!-- Publishes /map and /map_metadata with frame_id map -->
+<!-- Localisaion and Navigation -->
+<group if="$(arg move_base)">
+  <!-- Map Server -->
+  <!-- Publishes /map and /map_metadata with frame_id map -->
   <node name="map_server" pkg="map_server" type="map_server" args="$(find edukit_bot)/map/loft_map_2.yaml"/>
 
-<!-- Laser Scan Matcher -->
-<!-- Subscribes to /scan (sensor_msgs/LaserScan)-->
-<!-- Publishes  TF for map to odom -->
+  <!-- Laser Scan Matcher -->
+  <!-- Subscribes to /scan (sensor_msgs/LaserScan), /imu/data (sensor_msgs/IMU) and /odom -->
+  <!-- Publishes TF for odom to base_footprint frames and /pose2D (geometry_msgs/Pose2D)-->
   <node pkg="laser_scan_matcher" type="laser_scan_matcher_node" name="laser_scan_matcher_node" output="screen">
-   <param name="fixed_frame" value="odom"/>
-   <param name="base_frame" value="base_footprint"/>
+    <param name="fixed_frame" value="odom"/>
+    <param name="base_frame" value="base_footprint"/>
 
-   <param name="use_imu" value = "true" />
-   <param name="use_odom" value = "false" />
-   <param name="use_vel" value = "false" />
+    <param name="use_imu" value = "true" />
+    <param name="use_odom" value = "true" />
+    <param name="use_vel" value = "false" />
 
-   <param name="publish_tf" value = "true" />
-   <param name="publish_odom" value="true"/>
-   <param name="use_alpha_beta" value="true"/>
-   <param name="max_iterations" value="10"/>
+<!-- TODO look at every frame not just key frames, as AMCL will deal with drift? -->
+    <param name="kf_dist_linear" value = "0" />
+    <param name="kf_dist_angular" value = "0" />
+
+    <param name="publish_tf" value = "true" />
   </node>
+
+  <!-- AMCL - track the pose of the robot against a known map-->
+  <!-- Subscribes to /scan (sensor_msgs/LaserScan), /tf (tf/tfMessage) and /map (nav_msgs/OccupancyGrid) -->
+  <!-- Publishes TF for map to odom frames -->
+  <include file="$(find edukit_bot)/launch/amcl_diff.launch" />
+
+  <!-- Move Base Navigation -->
+  <!-- Subscribes to TF, /odom, /map and /scan -->
+  <!-- Publishes /cmd_vel -->
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find edukit_bot)/param/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+    <rosparam file="$(find edukit_bot)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find edukit_bot)/param/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find edukit_bot)/param/global_costmap_params.yaml" command="load" /> 
+    <rosparam file="$(find edukit_bot)/param/base_local_planner_params.yaml" command="load" />
+  </node>
+
+</group>
 
 </launch>
