@@ -1,4 +1,7 @@
 <?xml version="1.0"?>
+
+<!-- Called from bringup.launch -->
+
 <launch>
 
   <node pkg ="tf" type="static_transform_publisher" name="static_map_to_odom" args="0.0 0.0 0.0 0.0 0.0 0.0 /map /odom 50"/>
