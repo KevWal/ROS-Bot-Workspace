@@ -4,6 +4,12 @@
 Fan Control in /boot/firmware/usercfg.txt
 	dtoverlay=gpio-fan,gpiopin=19,temp=45000
 
+Enable SSD boot:
+  e2label /dev/mmcblk0p2 writable-sdcard (from writable to stop sdcard main part' being used)
+  fatlabel /dev/sda1 system-ssd (from system-boot to stop ssd boot part' being used)
+  test: dd if=/dev/zero of=./speedTestFile bs=20M count=5 oflag=direct > 100MB/s
+    dd if=./speedTestFile of=/dev/zero bs=20M count=5 oflag=dsync > 100MB/s
+
 #Encoder overlay in /boot/firmware/usercfg.txt
 #	dtoverlay=rotary-encoder,pin_a=23,pin_b=22,relative_axis=1,steps-per-period=1
 #	dtoverlay=rotary-encoder,pin_a=24,pin_b=25,relative_axis=1,steps-per-period=1
