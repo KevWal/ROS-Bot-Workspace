@@ -18,7 +18,7 @@ class Odom:
     def __init__(self):
         rospy.init_node("odom")
         self.nodename = rospy.get_name()
-        rospy.loginfo("-I- %s started" % self.nodename)
+        rospy.loginfo("%s started" % self.nodename)
         
         # Parameters
         self.driver_rate = rospy.get_param('driver_rate', 10)  # the rate ticks are published
@@ -26,14 +26,18 @@ class Odom:
         self.ticks_meter = float(rospy.get_param('ticks_meter', 1000 / 143 * 1580))  # encoder ticks per meter of travel
         self.base_width = float(rospy.get_param('wheel_base', 0.100)) # The wheel base width in meters
         
-        self.base_frame_id = rospy.get_param('base_frame_id','base_footprint') # the name of the base frame of the robot
-        self.odom_frame_id = rospy.get_param('odom_frame_id', 'odom') # the name of the odometry reference frame
-        
+        self.base_frame_id = rospy.get_param('base_frame_id','base_footprint') # the name of the base frame of the robot - child_frame_id
+        self.odom_frame_id = rospy.get_param('odom_frame_id', 'odom') # the name of the odometry reference frame - frame_id
+
+        self.odom_topic = rospy.get_param('odom_topic', 'odom') # the name of the topic on which to publish
+
+        # Our encoder values are not incremental, so wont wrap
         #self.encoder_min = rospy.get_param('encoder_min', -32768)
         #self.encoder_max = rospy.get_param('encoder_max', 32768)
         #self.encoder_low_wrap = rospy.get_param('wheel_low_wrap', (self.encoder_max - self.encoder_min) * 0.3 + self.encoder_min )
         #self.encoder_high_wrap = rospy.get_param('wheel_high_wrap', (self.encoder_max - self.encoder_min) * 0.7 + self.encoder_min )
- 
+
+        # Elapsed time no longer used
         #self.t_delta = rospy.Duration(1.0/self.rate)
         #self.t_next = rospy.Time.now() + self.t_delta
         
@@ -46,8 +50,8 @@ class Odom:
         self.right_updated = False
         #self.lmult = 0             # to deal with encoder value wrap around
         #self.rmult = 0
-        self.prev_lencoder = 0      # previous encoder values
-        self.prev_rencoder = 0
+        #self.prev_lencoder = 0      # previous encoder values
+        #self.prev_rencoder = 0
         self.x = 0                  # position in xy plane 
         self.y = 0
         self.th = 0
@@ -58,8 +62,7 @@ class Odom:
         # subscriptions
         rospy.Subscriber("lwheel_ticks", Int32, self.lwheel_callback)
         rospy.Subscriber("rwheel_ticks", Int32, self.rwheel_callback)
-        self.odomPub = rospy.Publisher("odom", Odometry, queue_size=10)
-#        self.odomPub = rospy.Publisher("raw_odom", Odometry, queue_size=10)
+        self.odomPub = rospy.Publisher(self.odom_topic, Odometry, queue_size=10)
         self.odomBroadcaster = TransformBroadcaster()
 
     def lwheel_callback(self, msg):
@@ -74,13 +77,12 @@ class Odom:
 
         # Raise error if we haven't used the encoder value
         if self.left_updated:
-            rospy.logerr("-I- %s Left encoder value skipped!" % self.nodename)
+            rospy.logerr("%s Left encoder value skipped!" % self.nodename)
         #else:
         #    print("L updated {:0.0f}".format(enc))
         
-        self.left = enc - self.prev_lencoder
+        self.left = enc
         self.left_updated = True
-        self.prev_lencoder = enc
         
     def rwheel_callback(self, msg):
         enc = msg.data
@@ -94,25 +96,16 @@ class Odom:
 
         # Raise error if we haven't used the encoder value
         if self.right_updated:
-            rospy.logerr("-I- %s Right encoder value skipped!" % self.nodename)
+            rospy.logerr("%s Right encoder value skipped!" % self.nodename)
         #else:
         #    print("R updated {:0.0f}".format(enc))
         
-        self.right = enc - self.prev_rencoder
+        self.right = enc
         self.right_updated = True
-        self.prev_rencoder = enc
 
     def update(self):
-        #now = rospy.Time.now()
-        #if now > self.t_next:
-        #    elapsed = now - self.then
-        #    self.then = now
-        #    elapsed = elapsed.to_sec()
-
         #  Make sure we have an updated left and right encoder value
-        #print("update")
         if self.left_updated and self.right_updated:
-            #print("updated")
             # Take a copy of encoder values incase they get updated
             left = self.left
             right = self.right
@@ -125,35 +118,25 @@ class Odom:
             elapsed_t = now - self.then
             self.then = now
             elapsed_t = elapsed_t.to_sec()
+            # or just...
+            elapsed = 1.0 / self.driver_rate
 
             # calculate odometry
-            #if self.enc_left == None:
-            #    d_left = 0
-            #    d_right = 0
-            #else:
-            #    d_left = (self.left - self.enc_left) / self.ticks_meter
-            #    d_right = (self.right - self.enc_right) / self.ticks_meter
-            #self.enc_left = self.left
-            #self.enc_right = self.right
-
             # left & right distance traveled
             d_left = left / self.ticks_meter
             d_right = right / self.ticks_meter
             # distance traveled is the average of the two wheels 
             d = ( d_left + d_right ) / 2
             # this approximation works (in radians) for small angles
-            th = ( d_right - d_left ) / self.base_width
+            #th = ( d_right - d_left ) / self.base_width
 
-            #th feels wrong, only turning 50% as much as it should?
-            # does this help?  https://github.com/lbrombach/practical_chapters/blob/master/chapter11/encoder_odom_publisher.cpp
-            #try:
-            #    th = asin( (d_right - d_left) / self.base_width)
-            #except ValueError:  # Occasionally get math domain error
-            #    th = 0
-            #    print("math domain error")
+            #alternate calculation https://github.com/lbrombach/practical_chapters/blob/master/chapter11/encoder_odom_publisher.cpp
+            try:
+                th = asin( (d_right - d_left) / self.base_width)
+            except ValueError:  # Occasionally get math domain error
+                th = ( d_right - d_left ) / self.base_width
 
             # calculate velocities
-            elapsed = 1.0 / self.driver_rate
             dx = d / elapsed  # Change in linear x
             dr = th / elapsed  # Change is angular z rotation
             
@@ -168,7 +151,6 @@ class Odom:
                 # calculate the final position of the robot
                 self.x = self.x + ( cos( self.th ) * x - sin( self.th ) * y )
                 self.y = self.y + ( sin( self.th ) * x + cos( self.th ) * y )
-            #if( th != 0):
                 self.th = self.th + th
 
                 print("Odom: enc_l {: 3.0f}, enc_r {: 3.0f}, d_l {: 0.2f}, d_r {: 0.2f}, d {: 0.2f}, th {: 0.2f}, " \
@@ -194,12 +176,12 @@ class Odom:
             # publish the odom information            
             odom = Odometry()
             odom.header.stamp = now
-            odom.header.frame_id = self.odom_frame_id
+#            odom.header.frame_id = self.odom_frame_id
             odom.pose.pose.position.x = self.x
             odom.pose.pose.position.y = self.y
             odom.pose.pose.position.z = 0
             odom.pose.pose.orientation = quaternion
-            odom.child_frame_id = self.base_frame_id
+#            odom.child_frame_id = self.base_frame_id
             odom.twist.twist.linear.x = dx
             odom.twist.twist.linear.y = 0
             odom.twist.twist.angular.z = dr
