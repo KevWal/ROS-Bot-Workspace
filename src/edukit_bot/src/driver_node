@@ -95,10 +95,10 @@ class Motor:
             pwm.setLevel(self._forward_pin, 1)
             pwm.setLevel(self._backward_pin, 0)
 
-        print("Motor: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.3f}, ticks {: 3.0f}, " \
-            "actual spd {: 0.3f}, err {: 0.3f}, prev err {: 0.3f}, sum err {: 0.3f}, pwr {: 0.2f}, " \
-            " duty {:2.0f}".format(self._pwm_pin, rate, requested_speed, ticks, actual_speed, \
-            error, self._prev_error, self._sum_error, self.power, duty_cycle))
+        #print("Motor: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.3f}, ticks {: 3.0f}, " \
+        #    "actual spd {: 0.3f}, err {: 0.3f}, prev err {: 0.3f}, sum err {: 0.3f}, pwr {: 0.2f}, " \
+        #    " duty {:2.0f}".format(self._pwm_pin, rate, requested_speed, ticks, actual_speed, \
+        #    error, self._prev_error, self._sum_error, self.power, duty_cycle))
 
     def enc_reset(self):
         self.enc_value = 0
@@ -121,7 +121,7 @@ class Driver:
         rospy.loginfo("%s started" % self.nodename)
 
         # Parameters
-        self._timeout = rospy.get_param('timeout', 50)
+        self._timeout = rospy.get_param('timeout', 3)
         self._rate = rospy.get_param('driver_rate', 10)
         self._max_speed = rospy.get_param('max_speed', 0.05)
         self._wheel_base = rospy.get_param('wheel_base', 0.138)
@@ -151,9 +151,10 @@ class Driver:
 
         # Extract linear and angular velocities from the message
         self._linear = _clip(message.linear.x, -self._max_speed, self._max_speed)
-        self._angular = _clip(message.angular.z, -self._max_speed, self._max_speed)
+        # TODO Add _max_angular parameter if we feel we need to
+        #self._angular = _clip(message.angular.z, -self._max_angular, self._max_angular)
         #self._linear = message.linear.x
-        #self._angular = message.angular.z
+        self._angular = message.angular.z
 
         #print("Twist: Linear {: 0.2f}, Angular {: 0.2f}".format(self._linear, self._angular))
 

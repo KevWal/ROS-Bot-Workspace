@@ -24,12 +24,15 @@ class Odom:
         self.driver_rate = rospy.get_param('driver_rate', 10)  # the rate ticks are published
         
         self.ticks_meter = float(rospy.get_param('ticks_meter', 1000 / 143 * 1580))  # encoder ticks per meter of travel
-        self.base_width = float(rospy.get_param('wheel_base', 0.100)) # The wheel base width in meters
+        self.base_width = float(rospy.get_param('wheel_base', 0.090)) # The wheel base width in meters
         
         self.base_frame_id = rospy.get_param('base_frame_id','base_footprint') # the name of the base frame of the robot - child_frame_id
         self.odom_frame_id = rospy.get_param('odom_frame_id', 'odom') # the name of the odometry reference frame - frame_id
 
         self.odom_topic = rospy.get_param('odom_topic', 'odom') # the name of the topic on which to publish
+
+        self.odom_publish_tf = rospy.get_param('~odom_publish_tf', 'true') # Should we publish a transform or not?
+        rospy.loginfo("odom_publish_tf %s" % self.odom_publish_tf)
 
         # Our encoder values are not incremental, so wont wrap
         #self.encoder_min = rospy.get_param('encoder_min', -32768)
@@ -165,13 +168,14 @@ class Odom:
             quaternion.y = 0.0
             quaternion.z = sin( self.th / 2 )
             quaternion.w = cos( self.th / 2 )
-            #self.odomBroadcaster.sendTransform(
-            #    (self.x, self.y, 0),
-            #    (quaternion.x, quaternion.y, quaternion.z, quaternion.w),
-            #    rospy.Time.now(),
-            #    self.base_frame_id,
-            #    self.odom_frame_id
-            #    )
+            if self.odom_publish_tf:
+                self.odomBroadcaster.sendTransform(
+                    (self.x, self.y, 0),
+                    (quaternion.x, quaternion.y, quaternion.z, quaternion.w),
+                    rospy.Time.now(),
+                    self.base_frame_id,
+                    self.odom_frame_id
+                    )
 
             # publish the odom information            
             odom = Odometry()

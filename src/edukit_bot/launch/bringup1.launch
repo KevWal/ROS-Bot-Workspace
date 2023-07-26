@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<launch>
+
+
+<!-- Static TF for base_link to base_footprint -->
+  <node name="static_footprint_to_link" pkg="tf" type="static_transform_publisher" args="0.00 0.0 0.0 0.0 0.0 0.0 base_footprint base_link 50" />
+
+<!-- Joystick Node -->
+<!--Publishes /joy (sensor_msgs/Joy) --> 
+  <node pkg="joy" type="joy_node" name="joystick" output="screen">
+    <param name="autorepeat_rate" value="1" />
+    <param name="deadzone" value="0.01" />
+  </node>
+
+<!-- Joystick to Twist Node -->
+<!-- Subscribes /joy (sensor_msgs/Joy) -->
+<!-- Publishes /cmd_vel (geometry_msgs/Twist) -->
+  <node pkg="teleop_twist_joy" type="teleop_node" name="joystick_to_twist" output="screen">
+    <param name="scale_linear" value="0.05" />
+    <param name="scale_angular" value="0.314" />
+  </node>
+
+<!-- Motor Driver Node -->
+<!-- Subscribes /cmd_vel (geometry_msgs/Twist) -->
+<!-- Publishes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
+  <node pkg="edukit_bot" type="driver_node" name="driver" output="screen" />
+
+<!-- Odomotry Node -->
+<!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
+<!-- Publishes /raw_odom (nav_msgs/Odometry) with frame_id odom and child_frame_id base_link -->
+  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >
+    <param name="odom_publish_tf" value="true" />
+  </node>
+
+
+
+
+</launch>
+
