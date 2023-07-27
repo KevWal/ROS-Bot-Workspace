@@ -9,9 +9,9 @@
 <!-- Create map using hector_mapping -->
   <arg name="hector_mapping" default="false"/>
 <!-- Navigation -->
-  <arg name="navigation_stack" default="false"/>
+  <arg name="navigation_stack" default="true"/>
 <!-- Navigate robot using laser_scan_matcher and move_base -->
-  <arg name="laser_move_base" default="true"/>
+  <arg name="laser_move_base" default="false"/>
 
 <!-- Static TF for world to map -->
   <node name="static_world_to_map" pkg="tf" type="static_transform_publisher" args="0.00 0.0 0.0 0.0 0.0 0.0 world map 50" />

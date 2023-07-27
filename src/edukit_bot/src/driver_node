@@ -156,7 +156,7 @@ class Driver:
         #self._linear = message.linear.x
         self._angular = message.angular.z
 
-        #print("Twist: Linear {: 0.2f}, Angular {: 0.2f}".format(self._linear, self._angular))
+        print("Twist: Linear {: 0.2f}, Angular {: 0.2f}".format(self._linear, self._angular))
 
         # Calculate wheel speeds in m/s
         self._left_speed = self._linear - self._angular * self._wheel_base / 2
@@ -186,6 +186,10 @@ class Driver:
 
             #print("")
             rate.sleep()
+
+        # On shutdown stop motors
+        self._left_motor.move(0, self._rate)
+        self._right_motor.move(0, self._rate)
 
 
 def main():
