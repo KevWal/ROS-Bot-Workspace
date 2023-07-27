@@ -7,11 +7,12 @@
 <!-- Test Odom transformation -->
   <arg name="test_odom" default="false"/>
 <!-- Create map using hector_mapping -->
-  <arg name="hector_mapping" default="false"/>
+  <arg name="hector_mapping" default="true"/>
 <!-- Navigation -->
-  <arg name="navigation_stack" default="true"/>
+  <arg name="navigation_stack" default="false"/>
 <!-- Navigate robot using laser_scan_matcher and move_base -->
   <arg name="laser_move_base" default="false"/>
+
 
 <!-- Static TF for world to map -->
   <node name="static_world_to_map" pkg="tf" type="static_transform_publisher" args="0.00 0.0 0.0 0.0 0.0 0.0 world map 50" />
@@ -20,7 +21,7 @@
   <node name="static_footprint_to_link" pkg="tf" type="static_transform_publisher" args="0.00 0.0 0.0 0.0 0.0 0.0 base_footprint base_link 50" />
 
 <!-- Joystick Node -->
-<!--Publishes /joy (sensor_msgs/Joy) --> 
+<!-- Publishes /joy (sensor_msgs/Joy) --> 
   <node pkg="joy" type="joy_node" name="joystick" output="screen">
     <param name="autorepeat_rate" value="1" />
     <param name="deadzone" value="0.01" />
@@ -59,9 +60,9 @@
 <group if="$(arg test_odom)">
   <!-- Odomotry Node -->
   <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
-  <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom and child_frame_id base_link -->
-  <!-- Ask odom_node to publish odom to base_footprint -->
+  <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom -->
   <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >
+    <!-- Ask odom_node to publish odom to base_footprint -->
     <param name="odom_publish_tf" value="true" />
   </node>
 
@@ -72,16 +73,25 @@
 
 <!-- Hector Mapping -->
 <group if="$(arg hector_mapping)">
-  <include file="$(find edukit_bot)/launch/hector_mapping.launch" />
+  <!-- Hector Mapping -->
+  <!-- Subscribes to /scan -->
+  <!-- Publishes /map (nav_msgs/OccupancyGrid), and map frame to odom frame Transformation -->
+  <node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" output="screen" />
 
-  <include file="$(find hector_geotiff_launch)/launch/geotiff_mapper.launch">
+  <!-- Static Transform for odom to base_footprint frames -->
+  <node pkg ="tf" type="static_transform_publisher" name="static_odom_to_base_footprint" args="0.0 0.0 0.0 0.0 0.0 0.0 /odom /base_footprint 50"/>
+
+  <!-- Save map using "rosrun map_server map_saver -f my_map" -->
+
+  <!-- Doesnt seem to be required, we dont need a trajectory path now a geotif map -->
+<!--  <include file="$(find hector_geotiff_launch)/launch/geotiff_mapper.launch">
     <arg name="trajectory_source_frame_name" value="scanmatcher_frame" />
     <arg name="map_file_path" value="$(find edukit_bot)/map" />
-  </include>
+  </include> -->
 </group>
 
 
-<!-- Navigation - fails as soon as I turn! https://www.youtube.com/watch?v=-B1YSXHhGhA -->
+<!-- Navigation -->
 <!-- http://wiki.ros.org/navigation/Tutorials/RobotSetup -->
 <group if="$(arg navigation_stack)">
   <!-- Odomotry Node -->
@@ -97,6 +107,7 @@
   <node name="map_server" pkg="map_server" type="map_server" args="$(find edukit_bot)/map/loft_map_2.yaml"/>
 
   <!-- AMCL -->
+  <!-- Subscribes to /scan -->
   <include file="$(find edukit_bot)/launch/amcl_diff.launch" />
 
   <!-- Move Base -->
