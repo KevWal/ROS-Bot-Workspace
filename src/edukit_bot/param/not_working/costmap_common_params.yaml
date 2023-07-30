@@ -1,0 +1,24 @@
+
+footprint: "[ [0.12, 0.095], [0.12, -0.095], [-0.22, -0.080], [-0.22, 0.080] ]"
+
+robot_base_frame: base_footprint
+
+obstacle_range: 2.5
+raytrace_range: 3.0
+
+# Allow a longer delay to stop Extrapolation errors
+# https://answers.ros.org/question/329009/what-is-the-mean-of-transform_tolerance-param/
+transform_tolerance: 0.2 # Default 0.2s
+
+# Layer definitions
+static:
+  map_topic: /map
+  subscribe_to_updates: true
+
+obstacles_laser:
+ observation_sources: laser
+ laser: {ensor_frame: base_laser, data_type: LaserScan, clearing: true, marking: true, topic: scan, inf_is_valid: true, expected_update_rate: 0.2}
+
+inflation:
+  inflation_radius: 0.55
+

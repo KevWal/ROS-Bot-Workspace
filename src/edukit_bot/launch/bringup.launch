@@ -99,11 +99,11 @@
   <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
   <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom and child_frame_id base_link -->
   <!-- Ask odom_node to publish odom to base_footprint -->
-  <!--<node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >
+  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >
     <param name="odom_publish_tf" value="true" />
-  </node> -->
+  </node>
 
-  <node pkg="fake_odom" type="fake_odom_node" name="fake_odom_node" output="screen" />
+  <!-- <node pkg="fake_odom" type="fake_odom_node" name="fake_odom_node" output="screen" /> -->
 
   <!-- Map Server -->
   <!-- Publishes /map and /map_metadata with frame_id map -->
@@ -115,6 +115,9 @@
 
   <!-- Move Base -->
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <param name="base_global_planner" value="navfn/NavfnROS"/>
+    <!-- <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>   -->
+    <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/>
     <rosparam file="$(find edukit_bot)/param/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
     <rosparam file="$(find edukit_bot)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find edukit_bot)/param/local_costmap_params.yaml" command="load" />
