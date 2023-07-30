@@ -54,8 +54,8 @@ class Motor:
     def move(self, requested_speed, rate):
         # Number of ticks since we last looked
         ticks = self.enc_value
-        #print("Motor: pin {:0.0f}, rate {:0.0f}, e_v {: 0.0f}, ticks {:2.0f}".format(self._pwm_pin, \
-        #    rate,  self.enc_value, ticks))
+        print("Motor: pin {:0.0f}, rate {:0.0f}, e_v {: 0.0f}, ticks {:2.0f}".format(self._pwm_pin, \
+            rate,  self.enc_value, ticks))
 
         # Yellow TT Motor - 40 ticks per turn and 217mm per turn = 0.0050465 meters per tick
         # Micro Metal Gear Motor - 1580 ticks per turn and 0.143m per turn
@@ -156,7 +156,7 @@ class Driver:
         #self._linear = message.linear.x
         self._angular = message.angular.z
 
-        print("Twist: Linear {: 0.2f}, Angular {: 0.2f}".format(self._linear, self._angular))
+        # print("Twist: Linear {: 0.2f}, Angular {: 0.2f}".format(self._linear, self._angular))
 
         # Calculate wheel speeds in m/s
         self._left_speed = self._linear - self._angular * self._wheel_base / 2

@@ -51,6 +51,8 @@ class Odom:
         self.right = 0
         self.left_updated = False   # keep track of updated values
         self.right_updated = False
+        self.left_total = 0
+        self.right_total = 0
         #self.lmult = 0             # to deal with encoder value wrap around
         #self.rmult = 0
         #self.prev_lencoder = 0      # previous encoder values
@@ -83,7 +85,11 @@ class Odom:
             rospy.logerr("%s Left encoder value skipped!" % self.nodename)
         #else:
         #    print("L updated {:0.0f}".format(enc))
-        
+      
+        #if enc != 0:  
+        #    self.left_total += enc
+        #    print("L {:0.0f}".format(self.left_total))
+
         self.left = enc
         self.left_updated = True
         
@@ -102,7 +108,11 @@ class Odom:
             rospy.logerr("%s Right encoder value skipped!" % self.nodename)
         #else:
         #    print("R updated {:0.0f}".format(enc))
-        
+      
+        #if enc != 0: 
+        #    self.right_total += enc
+        #    print("R {:0.0f}".format(self.right_total))
+ 
         self.right = enc
         self.right_updated = True
 

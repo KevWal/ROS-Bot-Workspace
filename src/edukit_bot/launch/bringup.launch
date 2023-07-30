@@ -7,9 +7,9 @@
 <!-- Test Odom transformation -->
   <arg name="test_odom" default="false"/>
 <!-- Create map using hector_mapping -->
-  <arg name="hector_mapping" default="true"/>
-<!-- Navigation -->
-  <arg name="navigation_stack" default="false"/>
+  <arg name="hector_mapping" default="false"/>
+<!-- Traditional odom_node / AMCL / move_base Navigation Stack -->
+  <arg name="navigation_stack" default="true"/>
 <!-- Navigate robot using laser_scan_matcher and move_base -->
   <arg name="laser_move_base" default="false"/>
 
@@ -62,9 +62,10 @@
   <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
   <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom -->
   <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >
-    <!-- Ask odom_node to publish odom to base_footprint -->
     <param name="odom_publish_tf" value="true" />
   </node>
+
+  <!-- <node pkg="fake_odom" type="fake_odom_node" name="fake_odom_node" output="screen" /> -->
 
   <!-- Static Transform for map to odom frames -->
   <node pkg ="tf" type="static_transform_publisher" name="static_map_to_odom" args="0.0 0.0 0.0 0.0 0.0 0.0 /map /odom 50"/>
@@ -98,13 +99,15 @@
   <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
   <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom and child_frame_id base_link -->
   <!-- Ask odom_node to publish odom to base_footprint -->
-  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >
+  <!--<node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >
     <param name="odom_publish_tf" value="true" />
-  </node>
+  </node> -->
+
+  <node pkg="fake_odom" type="fake_odom_node" name="fake_odom_node" output="screen" />
 
   <!-- Map Server -->
   <!-- Publishes /map and /map_metadata with frame_id map -->
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find edukit_bot)/map/loft_map_2.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find edukit_bot)/map/loft_map_3.yaml"/>
 
   <!-- AMCL -->
   <!-- Subscribes to /scan -->
