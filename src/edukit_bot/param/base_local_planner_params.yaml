@@ -16,6 +16,12 @@ TrajectoryPlannerROS:
 
   holonomic_robot: false
 
+# Modified to stop corner cutting!
+# The weighting for how much the controller should stay close to the path it was given
+  path_distance_bias: 0.8 # (double, default: 0.6)
+# The weighting for how much the controller should attempt to reach its local goal, also controls speed
+  goal_distance_bias: 0.6 # (double, default: 0.8)
+
 # Slow down controller as described here: http://zdome.net/wiki/index.php/Navigation_Tuning
 controller_frequency: 20.0 # Default 20
 
