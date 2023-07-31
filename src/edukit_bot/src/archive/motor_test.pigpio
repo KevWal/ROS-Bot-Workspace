@@ -1,27 +1,24 @@
 #!/usr/bin/env python3
 
-import rospy
-from geometry_msgs.msg import Twist
-from std_msgs.msg import Int32
 from PCA9685 import PCA9685
-from gpiozero import DigitalInputDevice
+import pigpio
 from time import sleep
 import signal
 import sys
 
-encoder_a_l = 23
-encoder_b_l = 22
+encoder_pin_a_l = 23
+encoder_pin_b_l = 22
 pwm_pin_l = 5
 fwd_pin_l = 4
 bwd_pin_l = 3
 
-encoder_a_r = 24
-encoder_b_r = 25
+encoder_pin_a_r = 24
+encoder_pin_b_r = 25
 pwm_pin_r = 0
 fwd_pin_r = 1
 bwd_pin_r = 2
 
-power = 50
+power = 100
 enc_value_a_l = 0
 enc_value_b_l = 0
 
@@ -33,28 +30,22 @@ min_elapsed_a_l = 100000
 max_elapsed_a_l = 0
 
 def signal_handler(sig, frame):
-    print(enc_value_a_l, enc_value_b_l, enc_value_a_r, enc_value_b_r)
+    #print(enc_value_a_l, enc_value_b_l, enc_value_a_r, enc_value_b_r)
     pwm.setDutycycle(pwm_pin_l, 0)
     pwm.setDutycycle(pwm_pin_r, 0)
+    sleep(0.1)
+    print(a_l_cb.tally(), b_l_cb.count, a_r_cb.count, b_r_cb.count)
     sys.exit(0)
 
 def enc_increment_a_l():
     # Our encoders dont recognise backwards, but if power is negative, they will be going backwards
     global enc_value_a_l
-    global time_last_a_l
-    global min_elapsed_a_l
-    global max_elapsed_a_l
     if power > 0:
         enc_value_a_l += 1
         #print("inc")
     else:
         enc_value_a_l -= 1
         #print("dec")
-#    if time_last_a_l > 0:
-#	elapsed = time.now() - time_last_a_l
-#	min_elapsed_a_l = min(min_elapsed_a_l, elapsed)
-#        max_elapsed_a_l - max(max_elapsed_a_l, elapsed)
-#    time_last_a_l = time.now()
 
 def enc_increment_b_l():
     # Our encoders dont recognise backwards, but if power is negative, they will be going backwards
@@ -92,25 +83,31 @@ pwm.setPWMFreq(50)
 
 signal.signal(signal.SIGINT, signal_handler)
 
-#encoder_a_l = DigitalInputDevice(encoder_a_l, pull_up=True)
+pi = pigpio.pi()
+
+a_l_cb = pi.callback(encoder_pin_a_l, pigpio.EITHER_EDGE)
+b_l_cb = pi.callback(encoder_pin_b_l, pigpio.EITHER_EDGE)
+
+a_r_cb = pi.callback(encoder_pin_a_r, pigpio.EITHER_EDGE)
+b_r_cb = pi.callback(encoder_pin_b_r, pigpio.EITHER_EDGE)
+
+#encoder_a_l = DigitalInputDevice(encoder_a_l, pull_up=None, active_state=False)
 #encoder_a_l.when_activated = enc_increment_a_l
 #encoder_a_l.when_deactivated = enc_increment_a_l
 
-#encoder_b_l = DigitalInputDevice(encoder_b_l, pull_up=True)
+#encoder_b_l = DigitalInputDevice(encoder_b_l, pull_up=None, active_state=False)
 #encoder_b_l.when_activated = enc_increment_b_l
 #encoder_b_l.when_deactivated = enc_increment_b_l
 
-#encoder_a_r = DigitalInputDevice(encoder_a_r, pull_up=True)
+#encoder_a_r = DigitalInputDevice(encoder_a_r, pull_up=None, active_state=False)
 #encoder_a_r.when_activated = enc_increment_a_r
 #encoder_a_r.when_deactivated = enc_increment_a_r
 
-#encoder_b_r = DigitalInputDevice(encoder_b_r, pull_up=True)
+#encoder_b_r = DigitalInputDevice(encoder_b_r, pull_up=None, active_state=False)
 #encoder_b_r.when_activated = enc_increment_b_r
 #encoder_b_r.when_deactivated = enc_increment_b_r
 
 duty_cycle = abs(power)
-pwm.setDutycycle(pwm_pin_l, duty_cycle)
-pwm.setDutycycle(pwm_pin_r, duty_cycle)
 
 # Positive speeds move wheels forward, negative speeds move wheels backward
 if power < 0:
@@ -124,11 +121,14 @@ else:
     pwm.setLevel(fwd_pin_l, 1)
     pwm.setLevel(bwd_pin_l, 0)
 
+pwm.setDutycycle(pwm_pin_l, duty_cycle)
+pwm.setDutycycle(pwm_pin_r, duty_cycle)
+
 print("a_l b_l a_r b_r")
 
-for x in range(1000):
-    print(enc_value_a_l, enc_value_b_l, enc_value_a_r, enc_value_b_r)
-    sleep(0.1)
+#for x in range(1000):
+#    print(enc_value_a_l, enc_value_b_l, enc_value_a_r, enc_value_b_r)
+sleep(0.2)
 
 print("Time ran out")
 signal_handler(0,0)

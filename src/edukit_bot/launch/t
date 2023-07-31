@@ -1,0 +1,16 @@
+Motor: pin 5, rate 10, req'ed spd  0.021, ticks   0, actual spd  0.000, err  0.021, prev err  0.021, sum err  0.021, pwr  0.11,  duty  0
+Motor: pin 0, rate 10, req'ed spd  0.030, ticks   0, actual spd  0.000, err  0.030, prev err  0.030, sum err  0.030, pwr  0.15,  duty 15
+Motor: pin 5, rate 10, req'ed spd  0.050, ticks   0, actual spd  0.000, err  0.050, prev err  0.050, sum err  0.071, pwr  0.37,  duty 37
+Motor: pin 0, rate 10, req'ed spd  0.050, ticks   4, actual spd  0.004, err  0.046, prev err  0.046, sum err  0.077, pwr  0.40,  duty 40
+Motor: pin 5, rate 10, req'ed spd  0.050, ticks  19, actual spd  0.017, err  0.033, prev err  0.033, sum err  0.104, pwr  0.56,  duty 56
+Motor: pin 0, rate 10, req'ed spd  0.050, ticks  11, actual spd  0.010, err  0.040, prev err  0.040, sum err  0.117, pwr  0.63,  duty 63
+Motor: pin 5, rate 10, req'ed spd  0.050, ticks  28, actual spd  0.025, err  0.025, prev err  0.025, sum err  0.129, pwr  0.71,  duty 71
+Motor: pin 0, rate 10, req'ed spd  0.050, ticks  32, actual spd  0.029, err  0.021, prev err  0.021, sum err  0.138, pwr  0.77,  duty 77
+Motor: pin 5, rate 10, req'ed spd  0.000, ticks  38, actual spd  0.034, err -0.034, prev err  0.000, sum err  0.000, pwr  0.00,  duty  0
+Motor: pin 0, rate 10, req'ed spd  0.000, ticks  39, actual spd  0.035, err -0.035, prev err  0.000, sum err  0.000, pwr  0.00,  duty  0
+Motor: pin 5, rate 10, req'ed spd  0.000, ticks  13, actual spd  0.012, err -0.012, prev err  0.000, sum err  0.000, pwr  0.00,  duty  0
+Motor: pin 0, rate 10, req'ed spd  0.000, ticks  30, actual spd  0.027, err -0.027, prev err  0.000, sum err  0.000, pwr  0.00,  duty  0
+Motor: pin 5, rate 10, req'ed spd  0.000, ticks   0, actual spd  0.000, err  0.000, prev err  0.000, sum err  0.000, pwr  0.00,  duty  0
+Motor: pin 0, rate 10, req'ed spd  0.000, ticks   0, actual spd  0.000, err  0.000, prev err  0.000, sum err  0.000, pwr  0.00,  duty  0
+
+

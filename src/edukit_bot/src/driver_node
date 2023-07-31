@@ -33,7 +33,7 @@ def _clip(value, minimum, maximum):
 
 
 class Motor:
-    def __init__(self, pwm_pin, forward_pin, backward_pin, encoder_pin):
+    def __init__(self, pwm_pin, forward_pin, backward_pin, encoder_pin, enc_topic):
         self._pwm_pin = pwm_pin
         self._forward_pin = forward_pin
         self._backward_pin = backward_pin
@@ -48,12 +48,22 @@ class Motor:
         self._encoder = DigitalInputDevice(encoder_pin, pull_up=True)
         self._encoder.when_activated = self._enc_increment
         self._encoder.when_deactivated = self._enc_increment
+
+        self._Pub = rospy.Publisher(enc_topic, Int32, queue_size=10)
+
         self.nodename = rospy.get_name()
-        rospy.loginfo("%s Motor %d Init" % (self.nodename, pwm_pin))
+        rospy.loginfo("%s Motor %d Init'ed" % (self.nodename, pwm_pin))
 
     def move(self, requested_speed, rate):
-        # Number of ticks since we last looked
+        # Save Number of ticks since we last looked
         ticks = self.enc_value
+
+        # Reset encoder ticks to zero
+        self.enc_value = 0
+
+        # Publish number of encoder ticks
+        self._Pub.publish(ticks)
+
         #print("Motor: pin {:0.0f}, rate {:0.0f}, e_v {: 0.0f}, ticks {:2.0f}".format(self._pwm_pin, \
         #    rate,  self.enc_value, ticks))
 
@@ -85,8 +95,7 @@ class Motor:
         if duty_cycle < 15:
             duty_cycle = 0
 
-        pwm.setDutycycle(self._pwm_pin, duty_cycle)
-
+        # Set motor direction
         # Positive speeds move wheels forward, negative speeds move wheels backward
         if self.power < 0:
             pwm.setLevel(self._forward_pin, 0)
@@ -95,18 +104,18 @@ class Motor:
             pwm.setLevel(self._forward_pin, 1)
             pwm.setLevel(self._backward_pin, 0)
 
-        #print("Motor: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.3f}, ticks {: 3.0f}, " \
-        #    "actual spd {: 0.3f}, err {: 0.3f}, prev err {: 0.3f}, sum err {: 0.3f}, pwr {: 0.2f}, " \
-        #    " duty {:2.0f}".format(self._pwm_pin, rate, requested_speed, ticks, actual_speed, \
-        #    error, self._prev_error, self._sum_error, self.power, duty_cycle))
+        # Set motor speed
+        pwm.setDutycycle(self._pwm_pin, duty_cycle)
 
-    def enc_reset(self):
-        self.enc_value = 0
+        print("Motor: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.3f}, ticks {: 3.0f}, " \
+            "actual spd {: 0.3f}, err {: 0.3f}, prev err {: 0.3f}, sum err {: 0.3f}, pwr {: 0.2f}, " \
+            " duty {:2.0f}".format(self._pwm_pin, rate, requested_speed, ticks, actual_speed, \
+            error, self._prev_error, self._sum_error, self.power, duty_cycle))
 
     def _enc_increment(self):
         # Our encoders didn't recognise backwards, but if power is negative, they will be going backwards
         # We do now have quad encoders on our TT motors, but this seems to work fine...
-        if self.power > 0:
+        if self.power >= 0:
             self.enc_value += 1
             #print("inc")
         else:
@@ -127,12 +136,12 @@ class Driver:
         self._wheel_base = rospy.get_param('wheel_base', 0.138)
 
         # Assign PCA9685 pins to motors and GPIO pins to Encoders.
-        self._left_motor = Motor(5, 4, 3, 23)
-        self._right_motor = Motor(0, 1, 2, 24)
+        self._left_motor = Motor(5, 4, 3, 23, 'lwheel_ticks')
+        self._right_motor = Motor(0, 1, 2, 24, 'rwheel_ticks')
 
         # Setup Publishers for encoders
-        self._leftPub = rospy.Publisher('lwheel_ticks', Int32, queue_size=10)
-        self._rightPub = rospy.Publisher('rwheel_ticks', Int32, queue_size=10)
+        #self._leftPub = rospy.Publisher('lwheel_ticks', Int32, queue_size=10)
+        #self._rightPub = rospy.Publisher('rwheel_ticks', Int32, queue_size=10)
 
         # Init variables
         self._last_received = rospy.get_time()
@@ -178,11 +187,11 @@ class Driver:
                 self._right_motor.move(0, self._rate)
 
             # Publish encoder values for Odom
-            self._leftPub.publish(self._left_motor.enc_value)
-            self._rightPub.publish(self._right_motor.enc_value)
+            #self._leftPub.publish(self._left_motor.enc_value)
+            #self._rightPub.publish(self._right_motor.enc_value)
 
-            self._left_motor.enc_reset()
-            self._right_motor.enc_reset()
+            #self._left_motor.enc_reset()
+            #self._right_motor.enc_reset()
 
             #print("")
             rate.sleep()
