@@ -33,7 +33,7 @@ def _clip(value, minimum, maximum):
 
 
 class Motor:
-    def __init__(self, pwm_pin, forward_pin, backward_pin, encoder_pin, enc_topic):
+    def __init__(self, pwm_pin, forward_pin, backward_pin, encoder_pin_A, encoder_pin_B, enc_topic):
         self._pwm_pin = pwm_pin
         self._forward_pin = forward_pin
         self._backward_pin = backward_pin
@@ -45,7 +45,7 @@ class Motor:
 
         # Encoder init
         self.enc_value = 0
-        self._encoder = DigitalInputDevice(encoder_pin, pull_up=True)
+        self._encoder = DigitalInputDevice(encoder_pin_A, pull_up=True)
         self._encoder.when_activated = self._enc_increment
         self._encoder.when_deactivated = self._enc_increment
 
@@ -136,8 +136,8 @@ class Driver:
         self._wheel_base = rospy.get_param('wheel_base', 0.138)
 
         # Assign PCA9685 pins to motors and GPIO pins to Encoders.
-        self._left_motor = Motor(5, 4, 3, 23, 'lwheel_ticks')
-        self._right_motor = Motor(0, 1, 2, 24, 'rwheel_ticks')
+        self._left_motor = Motor(5, 4, 3, 22, 23, 'lwheel_ticks')
+        self._right_motor = Motor(0, 1, 2, 24, 25, 'rwheel_ticks')
 
         # Setup Publishers for encoders
         #self._leftPub = rospy.Publisher('lwheel_ticks', Int32, queue_size=10)
