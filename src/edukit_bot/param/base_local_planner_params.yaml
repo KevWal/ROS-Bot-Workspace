@@ -4,7 +4,7 @@ TrajectoryPlannerROS:
 #  min_vel_trans: 0.02
 
   max_vel_x: 0.05
-  min_vel_x: 0.02
+  min_vel_x: -0.03
 
   max_vel_theta: 0.25
   min_vel_theta: -0.25
@@ -12,12 +12,21 @@ TrajectoryPlannerROS:
 
   escape_vel: -0.02
 
+  acc_lim_x: 0.1
+  acc_lim_y: 0
+  acc_lim_th: 0.5
+
   trans_stopped_vel: 0.001
   theta_stopped_vel: 0.01
 
   holonomic_robot: false
 
+  # https://wiki.ros.org/navigation/Tutorials/Navigation%20Tuning%20Guide
+  # If Acceleration limits low then set dwa to false
+  dwa: false # Whether to use the Dynamic Window Approach (DWA)_ or whether to use Trajectory Rollout
+
 # Modified to stop corner cutting!
+# Turning the path_distance_bias parameter up will make the robot follow the path more closely at the expense of moving towards the goal quickly. If this weight is set too high, the robot will refuse to move because the cost of moving is greater than staying at its location on the path.
 # The weighting for how much the controller should stay close to the path it was given
   path_distance_bias: 0.8 # (double, default: 0.6)
 # The weighting for how much the controller should attempt to reach its local goal, also controls speed
