@@ -5,11 +5,11 @@
 
 <!-- Set only one of these to true -->
 <!-- Test Odom transformation -->
-  <arg name="test_odom" default="false"/>
+  <arg name="test_odom" default="true"/>
 <!-- Create map using hector_mapping -->
   <arg name="hector_mapping" default="false"/>
 <!-- Traditional odom_node / AMCL / move_base Navigation Stack -->
-  <arg name="navigation_stack" default="true"/>
+  <arg name="navigation_stack" default="false"/>
 <!-- Navigate robot using laser_scan_matcher and move_base -->
   <arg name="laser_move_base" default="false"/>
 
