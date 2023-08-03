@@ -13,6 +13,8 @@
 <!-- Navigate robot using laser_scan_matcher and move_base -->
   <arg name="laser_move_base" default="false"/>
 
+<!-- Lidar Power On -->
+  <node pkg="edukit_bot" type="lidar_onoff" name="lidar_onoff" output="screen" />
 
 <!-- Static TF for world to map -->
   <node name="static_world_to_map" pkg="tf" type="static_transform_publisher" args="0.00 0.0 0.0 0.0 0.0 0.0 world map 50" />
@@ -42,7 +44,7 @@
 
 <!-- Lidar Node -->
 <!-- Publishes /scan (sensor_msgs/LaserScan) and /pointcloud2d (sensor_msgs/PointCloud) with frame_id base_laser -->
-  <node pkg="ldlidar_ros" type="ldlidar_ros_node" name="ldlidar_publisher_ld19" output="screen">
+  <node pkg="ldlidar_ros" type="ldlidar_ros_node" name="ldlidar_publisher_ld19" respawn="true" respawn_delay="10" output="screen">
     <param name="product_name" value="LDLiDAR_LD19"/>
     <param name="serial_baudrate" value="230400"/>
   </node>
