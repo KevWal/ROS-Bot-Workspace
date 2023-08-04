@@ -4,27 +4,33 @@
     Power on the Lidar
 """
 
-import rospy
 from time import sleep
 from gpiozero import LED
+import signal
+import warnings
+
+run = True
+
+def signal_handling(signum, frame):           
+    global run                        
+    run = False
 
 def main():
-    rospy.init_node('lidar_onoff')
-    nodename = rospy.get_name()
-    rospy.loginfo("%s started" % nodename)
+    print("Turning Lidar on")
+
+    warnings.filterwarnings("ignore", message="Falling back from")
 
     output = LED(5)
-
-    rospy.loginfo(rospy.get_caller_id() + " Turning Lidar on")
     output.on()
 
-    rospy.spin()
+    signal.signal(signal.SIGINT, signal_handling)
 
-    output.off()
-    rospy.loginfo(rospy.get_caller_id() + " Turning Lidar off")
-    output.off()
+    while run:
+        sleep(0.2)
+
     sleep(1)
-
+    print("Turning Lidar off")
+    output.off()
 
 if __name__ == '__main__':
     main()

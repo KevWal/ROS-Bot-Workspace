@@ -1,0 +1,7 @@
+#!/bin/sh
+
+~/edukit_bot_ws/src/edukit_bot/src/lidar_onoff &
+
+sleep 6
+
+roslaunch edukit_bot bringup.launch

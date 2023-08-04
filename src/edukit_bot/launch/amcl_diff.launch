@@ -44,7 +44,7 @@
   <param name="update_min_a" value="0.19625"/> <!-- 1/32nd of a cricle - Default 0.52 radians -->
 
   <param name="odom_frame_id" value="odom"/>
-  <param name="base_frame_id" value="base_footprint"/>
+  <param name="base_frame_id" value="base_link"/>
 
   <param name="resample_interval" value="1"/>
   <param name="transform_tolerance" value="0.2"/>  <!-- Default 0.1, increased to stop extrapolation Errors -->

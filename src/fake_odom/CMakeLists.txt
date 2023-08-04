@@ -17,14 +17,16 @@ catkin_package(
 
 include_directories(${catkin_INCLUDE_DIRS})
 
-add_executable(fake_odom_node src/fake_odom_node.cpp)
-target_link_libraries(fake_odom_node ${catkin_LIBRARIES})
+add_executable(fake_odom_node_tf src/fake_odom_node_tf.cpp)
+add_executable(fake_odom_node_no_tf src/fake_odom_node_no_tf.cpp)
+target_link_libraries(fake_odom_node_tf ${catkin_LIBRARIES})
+target_link_libraries(fake_odom_node_no_tf ${catkin_LIBRARIES})
 
 install(PROGRAMS
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(TARGETS fake_odom_node
+install(TARGETS fake_odom_node_tf fake_odom_node_no_tf
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

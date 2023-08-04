@@ -1,6 +1,6 @@
 local_costmap:
   global_frame: map # should be odom, but our odom frame moves about quite a bit so safer to be map
-  robot_base_frame: base_footprint
+  robot_base_frame: base_link
 
 # https://answers.ros.org/question/369769/update_frequency-vs-publish_frequency-costmap-parameters/
 #  update_frequency: 5
@@ -8,6 +8,6 @@ local_costmap:
 
   static_map: false
   rolling_window: true
-  width: 4.0
-  height: 4.0
+  width: 3.0
+  height: 3.0
   resolution: 0.025
