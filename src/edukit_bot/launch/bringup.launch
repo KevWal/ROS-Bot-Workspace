@@ -9,11 +9,11 @@
 <!-- Create map using hector_mapping -->
   <arg name="hector_mapping" default="false"/>
 <!-- Traditional odom_node / AMCL / move_base Navigation Stack -->
-  <arg name="navigation_stack" default="true"/>
+  <arg name="navigation_stack" default="false"/>
 <!-- Traditional odom_node / gmapping / move_base / explore_lite Navigation Stack -->
   <arg name="gmapnav" default="false"/>
 <!-- Hector / move_base / explore_lite Navigation Stack -->
-  <arg name="hectornav" default="false"/>
+  <arg name="hectornav" default="true"/>
 
 <!-- Navigate robot using laser_scan_matcher and move_base -->
   <arg name="laser_move_base" default="false"/>
@@ -105,7 +105,6 @@
   <!-- Odomotry Node -->
   <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
   <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom and optionally tf from odom to base_link -->
-  <!-- Ask odom_node to publish odom to base_link -->
   <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >
     <param name="odom_publish_tf" value="true" />
   </node>
@@ -132,6 +131,12 @@
     <rosparam file="$(find edukit_bot)/param/global_costmap_params_static.yaml" command="load" /> 
     <rosparam file="$(find edukit_bot)/param/base_local_planner_params.yaml" command="load" />
   </node>
+
+  <!-- Explore Lite -->
+  <!-- <node pkg="explore_lite" type="explore" respawn="false" name="explore" output="screen">
+      <rosparam file="$(find edukit_bot)/param/explore_lite.yaml" command="load" />
+  </node> -->
+
 </group>
 
 
@@ -139,8 +144,7 @@
 <group if="$(arg gmapnav)">
   <!-- Odomotry Node -->
   <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
-  <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom and child_frame_id base_link -->
-  <!-- Ask odom_node to publish odom to base_link -->
+  <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom and optionally tf from odom to base_link -->
   <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >
     <param name="odom_publish_tf" value="true" />
   </node>
@@ -157,7 +161,7 @@
     <param name="~stt" value="2.0" /> <!-- default: 0.2) Odometry error in rotation as a function of rotation (theta/theta)  -->
 
     <param name="~linearUpdate" value="0.5" /> <!-- default: 1.0) Process a scan each time the robot translates this far  -->
-    <param name="~angularUpdate" value="0.2" /> <!-- default: 0.5) Process a scan each time the robot rotates this far  -->
+    <param name="~angularUpdate" value="0.5" /> <!-- default: 0.5) Process a scan each time the robot rotates this far  -->
   </node>
 
   <!-- Move Base -->
@@ -173,26 +177,25 @@
   </node>
 
   <!-- Explore Lite -->
-  <node pkg="explore_lite" type="explore" respawn="false" name="explore" output="screen">
+  <!-- <node pkg="explore_lite" type="explore" respawn="false" name="explore" output="screen">
       <rosparam file="$(find edukit_bot)/param/explore_lite.yaml" command="load" />
-  </node>
+  </node> -->
 
 </group>
 
 
 <!-- Hector Navigation -->
 <group if="$(arg hectornav)">
-
   <!-- Hector Mapping -->
   <!-- Subscribes to /scan -->
-  <!-- Publishes /map (nav_msgs/OccupancyGrid), and map frame to odom frame Transformation -->
-  <!-- Also publishing /odom -->
+  <!-- Publishes /map (nav_msgs/OccupancyGrid), /odom, and map frame to odom frame Transformation -->
   <remap from="scanmatch_odom" to="odom" />
   <node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" output="screen" >
     <param name="pub_odometry" value="true"/>
     <param name="base_frame" value="base_link"/>
+    <!-- <param name="odom_frame" value="base_link"/> -->
     <param name="pub_map_scanmatch_transform" value="false"/>
-    <param name="pub_debug_output" value="false"/>
+    <param name="pub_debug_output" value="true"/>
     <param name="pub_drawings" value="true"/>
   </node>
 
@@ -212,9 +215,9 @@
   </node>
 
   <!-- Explore Lite -->
-  <node pkg="explore_lite" type="explore" respawn="false" name="explore" output="screen">
+  <!-- <node pkg="explore_lite" type="explore" respawn="false" name="explore" output="screen">
       <rosparam file="$(find edukit_bot)/param/explore_lite.yaml" command="load" />
-  </node>
+  </node> -->
 
 </group>
 
