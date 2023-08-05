@@ -4,26 +4,27 @@ TrajectoryPlannerROS:
 #  min_vel_trans: 0.02
 
   max_vel_x: 0.05
-  min_vel_x: -0.04
+  min_vel_x: 0.03 # Min allowed in BaseLocalPlanner.cfg is 0, default is 0, so doesnt need to be negative?
 
   max_vel_theta: 0.25
-  min_vel_theta: -0.25
-  min_in_place_vel_theta: 0.15
+  min_vel_theta: -0.25 # Min allowed in BaseLocalPlanner.cfg is -20, default is -1, so does need to be negative
+  min_in_place_vel_theta: 0.15 # Min allowed in BaseLocalPlanner.cfg is 0, default is 0.4, so doesnt need to be negative?
 
   escape_vel: -0.03
 
   acc_lim_x: 0.1
   acc_lim_y: 0
   acc_lim_th: 0.5
+  acc_lim_theta: 0.5
 
-  trans_stopped_vel: 0.001
-  theta_stopped_vel: 0.01
+  trans_stopped_vel: 0.01
+  theta_stopped_vel: 0.1
 
   holonomic_robot: false
 
   # https://wiki.ros.org/navigation/Tutorials/Navigation%20Tuning%20Guide
   # If Acceleration limits low then set dwa to false
-  dwa: true # Whether to use the Dynamic Window Approach (DWA)_ or whether to use Trajectory Rollout
+  dwa: false # Whether to use the Dynamic Window Approach (DWA)_ or whether to use Trajectory Rollout
 
 # Modified to stop corner cutting!
 # Turning the path_distance_bias parameter up will make the robot follow the path more closely at the expense of moving towards the goal quickly. If this weight is set too high, the robot will refuse to move because the cost of moving is greater than staying at its location on the path.
@@ -33,5 +34,7 @@ TrajectoryPlannerROS:
   goal_distance_bias: 0.8 # (double, default: 0.8)
 
 # Slow down controller as described here: http://zdome.net/wiki/index.php/Navigation_Tuning
-  controller_frequency: 10.0 # Default 20
+  controller_frequency: 5 # Default 20
+
+planner_frequency: 5
 

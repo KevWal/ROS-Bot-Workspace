@@ -9,14 +9,15 @@
 <!-- Create map using hector_mapping -->
   <arg name="hector_mapping" default="false"/>
 <!-- Traditional odom_node / AMCL / move_base Navigation Stack -->
-  <arg name="navigation_stack" default="false"/>
+  <arg name="navigation_stack" default="true"/>
 <!-- Traditional odom_node / gmapping / move_base / explore_lite Navigation Stack -->
   <arg name="gmapnav" default="false"/>
 <!-- Hector / move_base / explore_lite Navigation Stack -->
-  <arg name="hectornav" default="true"/>
+  <arg name="hectornav" default="false"/>
 
 <!-- Navigate robot using laser_scan_matcher and move_base -->
   <arg name="laser_move_base" default="false"/>
+
 
 <!-- Custom log level config -->
 <env name="ROSCONSOLE_CONFIG_FILE"
@@ -51,7 +52,7 @@
     <param name="product_name" value="LDLiDAR_LD19"/>
     <param name="serial_baudrate" value="230400"/>
   </node>
-<!-- Static TF for laser_link to base_link -->
+<!-- Static TF for base_laser to base_link -->
   <node name="static_base_to_laser" pkg="tf" type="static_transform_publisher" args="0.04 0.0 0.11 1.571 0.0 0.0 base_link base_laser 50" />
 
 <!-- IMU Node -->
@@ -61,19 +62,20 @@
   <node name="static_base_to_imu" pkg="tf" type="static_transform_publisher" args="-0.04 0.0 0.07 1.571 0.0 0.0 base_link base_imu 50" />
 
 
-<!-- Test Odom - fails on turn - https://www.youtube.com/watch?v=JPdHXrhvbyc -->
+<!-- Test Odom - Poor Odom! - https://www.youtube.com/watch?v=JPdHXrhvbyc -->
 <group if="$(arg test_odom)">
   <!-- Odomotry Node -->
   <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
-  <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom -->
-  <!--<node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >
+  <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom and optionally tf from odom to base_link-->
+  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >
     <param name="odom_publish_tf" value="true" />
-  </node>-->
+  </node>
 
-  <node pkg="fake_odom" type="fake_odom_node_tf" name="fake_odom_node_tf" output="screen" />
+  <!-- Fake odom option with tf direct from twist messages -->
+  <!-- <node pkg="fake_odom" type="fake_odom_node_tf" name="fake_odom_node_tf" output="screen" /> -->
 
   <!-- Static Transform for map to odom frames -->
-  <node pkg ="tf" type="static_transform_publisher" name="static_map_to_odom" args="0.0 0.0 0.0 0.0 0.0 0.0 /map /odom 50"/>
+  <node pkg ="tf" type="static_transform_publisher" name="static_map_to_odom" args="0.0 0.0 0.0 0.0 0.0 0.0 map odom 50"/>
 </group>
 
 
@@ -89,7 +91,7 @@
 
   <!-- Save map using "rosrun map_server map_saver -f my_map" -->
 
-  <!-- Doesnt seem to be required, we dont need a trajectory path now a geotif map -->
+  <!-- Doesnt seem to be required, we dont need a trajectory path nor a geotif map -->
 <!--  <include file="$(find hector_geotiff_launch)/launch/geotiff_mapper.launch">
     <arg name="trajectory_source_frame_name" value="scanmatcher_frame" />
     <arg name="map_file_path" value="$(find edukit_bot)/map" />
@@ -102,7 +104,7 @@
 <group if="$(arg navigation_stack)">
   <!-- Odomotry Node -->
   <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
-  <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom and child_frame_id base_link -->
+  <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom and optionally tf from odom to base_link -->
   <!-- Ask odom_node to publish odom to base_link -->
   <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >
     <param name="odom_publish_tf" value="true" />

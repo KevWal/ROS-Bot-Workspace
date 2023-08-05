@@ -30,7 +30,7 @@ int main( int argc, char** argv) {
 	current_time = ros::Time::now();
 	last_time = ros::Time::now();
 
-	ros::Rate rate (500);
+	ros::Rate rate (50);
   
 	while (n.ok()) {
 		current_time = ros::Time::now();

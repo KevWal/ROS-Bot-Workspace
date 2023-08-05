@@ -2,7 +2,7 @@ obstacle_range: 2.5
 raytrace_range: 3.0
 footprint: "[ [0.10, 0.090], [0.10, -0.090], [-0.20, -0.080], [-0.20, 0.080] ]"
 #robot_radius: ir_of_robot
-inflation_radius: 0.55
+inflation_radius: 0.25
 
 observation_sources: laser_scan_sensor
 
@@ -12,3 +12,8 @@ laser_scan_sensor: {sensor_frame: base_laser, data_type: LaserScan, topic: scan,
 # https://answers.ros.org/question/329009/what-is-the-mean-of-transform_tolerance-param/
 transform_tolerance: 0.2 # Default 0.2s
 
+controller_frequency: 5
+
+publish_frequency: 5
+
+resolution: 0.025

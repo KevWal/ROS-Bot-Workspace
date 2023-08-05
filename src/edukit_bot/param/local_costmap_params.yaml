@@ -1,5 +1,5 @@
 local_costmap:
-  global_frame: map # should be odom, but our odom frame moves about quite a bit so safer to be map
+  global_frame: odom # should be odom, but our odom frame moves about quite a bit so safer to be map?
   robot_base_frame: base_link
 
 # https://answers.ros.org/question/369769/update_frequency-vs-publish_frequency-costmap-parameters/
