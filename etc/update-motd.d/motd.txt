@@ -21,3 +21,5 @@ Launch file: roslaunch edukit_bot bringup.launch
 
 Map saver: rosrun map_server map_saver -f my_map
 
+Helpful commands: rosparam get /move_base; rqt_logger_level; rqt_graph; /opt/ros/noetic/lib/rqt_tf_tree/rqt_tf_tree
+Dynamic reconfigure: rosrun rqt_reconfigure rqt_reconfigure

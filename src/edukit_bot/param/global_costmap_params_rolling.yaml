@@ -6,4 +6,8 @@ global_costmap:
   width: 10.0
   height: 10.0
   resolution: 0.025
+  publish_potential: true
+  neutral cost: 66
+  cost_factor: 0.55
+  
 
