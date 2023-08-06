@@ -1,0 +1,37 @@
+
+recovery_behavior_enabled: true
+
+recovery_behaviors:
+  - {name: conservative_reset, type: clear_costmap_recovery/ClearCostmapRecovery}
+  - {name: stepback_and_steerturn_recovery, type: stepback_and_steerturn_recovery/StepBackAndSteerTurnRecovery}
+  - {name: second_conservative_reset, type: clear_costmap_recovery/ClearCostmapRecovery}
+  - {name: rotate_recovery, type: rotate_recovery/RotateRecovery}
+  - {name: aggressive_reset, type: clear_costmap_recovery/ClearCostmapRecovery}
+
+stepback_and_steerturn_recovery:
+    # true if you only want the first turn
+    only_single_steering: true
+    # number of recovery actions attempted
+    trial_times         : 3
+    # allowable distance to obsitcles (m)
+    # while moving, if the closest obstacle to the moving direction appears within this distance, stop.
+    obstacle_patience   : 0.2
+    # frequency of checking for obstacles during movement [times/sec]
+    obstacle_check_frequency: 5.0
+    # Angular resolution when searching for obstacles [rad] Adjust when you want to reduce the number of costmap accesses.
+    sim_angle_resolution: 0.1
+    # SIM update cycle when searching for obstacles [times/sec] Adjust when you want to reduce the number of costmap accesses.
+    simulation_frequency: 5
+    # back (speed at first retreat [m/s], movement distance [m], timeout [sec])
+    linear_vel_back     : -0.03
+    step_back_length    : 0.5
+    step_back_timeout   : 15.0
+    # steer (turning speed [rad/s] and target rotation angle [rad], timeout [sec])
+    linear_vel_steer    : 0.2
+    angular_speed_steer : 0.5
+    turn_angle          : 1.5
+    steering_timeout    : 15.0
+    # forward (turn, straight, straight turn speed [m/s] and target movement distance [m], timeout [sec])
+    linear_vel_forward  : 0.03
+    step_forward_length : 0.5
+    step_forward_timeout: 15.0

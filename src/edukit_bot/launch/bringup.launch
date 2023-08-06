@@ -190,7 +190,7 @@
   <!-- Subscribes to /scan -->
   <!-- Publishes /map (nav_msgs/OccupancyGrid), /odom, and map frame to odom frame Transformation -->
   <remap from="scanmatch_odom" to="odom" />
-  <node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" output="screen" >
+  <node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" respawn="true" output="screen" >
     <param name="pub_map_odom_transform" value="true"/>
     <param name="pub_odometry" value="true"/>
     <param name="base_frame" value="base_link"/>
@@ -205,10 +205,10 @@
   <!-- <node pkg ="tf" type="static_transform_publisher" name="static_odom_to_base_link" args="0.0 0.0 0.0 0.0 0.0 0.0 /odom /base_link 50"/> -->
 
   <!-- Take hector /slam_out_pose and convert it to a tf from odom to base_link -->
-  <node pkg="edukit_bot" type="odom_to_tf_node" name="odom_to_tf" respawn="false" output="screen" />
+  <node pkg="edukit_bot" type="odom_to_tf_node" name="odom_to_tf" respawn="true" output="screen" />
 
   <!-- Move Base -->
-  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+  <node pkg="move_base" type="move_base" name="move_base" respawn="true" output="screen">
     <param name="base_global_planner" value="navfn/NavfnROS"/>
     <!-- <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>   -->
     <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/>
@@ -217,12 +217,13 @@
     <rosparam file="$(find edukit_bot)/param/local_costmap_params.yaml" command="load" />
     <rosparam file="$(find edukit_bot)/param/global_costmap_params_rolling.yaml" command="load" />
     <rosparam file="$(find edukit_bot)/param/base_and_local_planner_params.yaml" command="load" />
+    <rosparam file="$(find edukit_bot)/param/recovery_params.yaml" command="load" />
   </node>
 
   <!-- Explore Lite -->
-  <node pkg="explore_lite" type="explore" respawn="false" name="explore" output="screen">
+  <!-- <node pkg="explore_lite" type="explore" name="explore" respawn="true" output="screen">
       <rosparam file="$(find edukit_bot)/param/explore_lite.yaml" command="load" />
-  </node>
+  </node> -->
 
 </group>
 

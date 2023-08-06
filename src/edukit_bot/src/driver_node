@@ -12,16 +12,12 @@ from PCA9685 import PCA9685
 from gpiozero import DigitalInputDevice
 from gpiozero import RotaryEncoder
 from time import sleep
-
-# Init the PCA9685 Hat
-# TODO I should be able to move these two lines to __init__ in Driver, but then how do I use 'pwm' in Motor?
-pwm = PCA9685(0x40, debug=False)
-pwm.setPWMFreq(25)
+import warnings
 
 # PID values
 KP = 10 # Proportional
-KD = 0.2 # Previous error
-KI = 0.3 # Long term error
+KD = 0.1 # Previous error
+KI = 0.5 # Long term error
 
 def _clip(value, minimum, maximum):
     """Ensure value is between minimum and maximum."""
@@ -46,17 +42,11 @@ class Motor:
         self._sum_error = 0
 
         # Encoder init
-        #self.enc_value = 0
         self._encoder = RotaryEncoder(encoder_pin_A, encoder_pin_B, max_steps=0, threshold_steps=(0, 0), wrap=False)
-        #self._encoder = DigitalInputDevice(encoder_pin_A, pull_up=True)
-        #self._encoder_B = DigitalInputDevice(encoder_pin_B, pull_up=True)
-        #self._encoder.when_activated = self._enc_increment
-        #self._encoder.when_deactivated = self._enc_increment
 
         self._Pub = rospy.Publisher(enc_topic, Int32, queue_size=10)
 
-        self.nodename = rospy.get_name()
-        rospy.loginfo("%s Motor %d Init'ed" % (self.nodename, pwm_pin))
+        rospy.loginfo("%s Motor %d Init'ed" % (rospy.get_name(), pwm_pin))
 
     def move(self, requested_speed):
         # Save Number of ticks since we last looked
@@ -109,31 +99,33 @@ class Motor:
         # Set motor speed
         pwm.setDutycycle(self._pwm_pin, duty_cycle)
 
-        #print("Mtr: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.3f}, ticks {: 3.0f}, " \
-        #    "ac spd {: 0.3f}, err {: 0.3f}, prv err {: 0.3f}, sum err {: 0.3f}, new pwr {: 0.2f}, " \
-        #    " new duty {:2.0f}".format(self._pwm_pin, self._rate, requested_speed, ticks, actual_speed, \
-        #    error, self._prev_error, self._sum_error, self.power, duty_cycle))
+        print("Mtr: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.3f}, ticks {: 3.0f}, " \
+            "ac spd {: 0.3f}, err {: 0.3f}, prv err {: 0.3f}, sum err {: 0.3f}, new pwr {: 0.2f}, " \
+            " new duty {:2.0f}".format(self._pwm_pin, self._rate, requested_speed, ticks, actual_speed, \
+            error, self._prev_error, self._sum_error, self.power, duty_cycle))
 
         # Record errors for next iteration
         self._prev_error = error
         self._sum_error += error
 
-#    def _enc_increment(self):
-#        # Our encoders didn't recognise backwards, but if power is negative, they will be going backwards
-#        # We do now have quad encoders on our TT motors, but this seems to work fine...
-#        if self.power >= 0:
-#            self.enc_value += 1
-#            #print("inc")
-#        else:
-#            self.enc_value -= 1
-#            #print("dec")
+        # Check our motor is not stalled
+        # Is our motor speed significantly behind where it should be?
+        if abs(self._sum_error) > abs(requested_speed) * 5:
+            # And is it continuing to get further behind?
+            # x*y > 0 evaluates to True if both numbers have the same sign
+            if error * self._sum_error > 0:
+                rospy.logwarn("%s Motor %d might be stalled!" % (rospy.get_name(), self._pwm_pin))
+            else:
+                rospy.loginfo("%s Motor %d now seems to be unstalled!" % (rospy.get_name(), self._pwm_pin))
+
+        # No point letting _sum_error get too large if motor is stalled for example
+        self._sum_error = _clip(self._sum_error, 0 - abs(requested_speed * 10), abs(requested_speed * 10))
 
 
 class Driver:
     def __init__(self):
         rospy.init_node('driver')
-        self.nodename = rospy.get_name()
-        rospy.loginfo("%s started" % self.nodename)
+        rospy.loginfo("%s started" % rospy.get_name())
 
         # Parameters
         self._timeout = rospy.get_param('timeout', 3)
@@ -144,10 +136,6 @@ class Driver:
         # Assign PCA9685 pins to motors and GPIO pins to Encoders.
         self._left_motor = Motor(self._rate, 5, 4, 3, 23, 22, 'lwheel_ticks')
         self._right_motor = Motor(self._rate, 0, 1, 2, 25, 24, 'rwheel_ticks')
-
-        # Setup Publishers for encoders
-        #self._leftPub = rospy.Publisher('lwheel_ticks', Int32, queue_size=10)
-        #self._rightPub = rospy.Publisher('rwheel_ticks', Int32, queue_size=10)
 
         # Init variables
         self._last_received = rospy.get_time()
@@ -192,13 +180,6 @@ class Driver:
                 self._left_motor.move(0)
                 self._right_motor.move(0)
 
-            # Publish encoder values for Odom
-            #self._leftPub.publish(self._left_motor.enc_value)
-            #self._rightPub.publish(self._right_motor.enc_value)
-
-            #self._left_motor.enc_reset()
-            #self._right_motor.enc_reset()
-
             #print("")
             rate.sleep()
 
@@ -208,6 +189,14 @@ class Driver:
 
 
 def main():
+    # We use Pigpio, ignore rpigpio, lgpio and rpio errors
+    warnings.filterwarnings("ignore", message="Falling back from")
+
+    # Init the PCA9685 Hat
+    global pwm
+    pwm = PCA9685(0x40, debug=False)
+    pwm.setPWMFreq(50)
+
     driver = Driver()
 
     # Run driver. This will block

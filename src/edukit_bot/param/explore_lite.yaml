@@ -2,7 +2,7 @@ robot_base_frame: base_link
 costmap_topic: map
 costmap_updates_topic: map_updates
 visualize: true
-planner_frequency: 0.20
+planner_frequency: 0.20 
 progress_timeout: 30.0
 potential_scale: 3.0
 gain_scale: 1.0
