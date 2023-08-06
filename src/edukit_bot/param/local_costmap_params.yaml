@@ -1,13 +1,18 @@
 local_costmap:
-  global_frame: odom # should be odom, but our odom frame moves about quite a bit so safer to be map?
+  global_frame: map # should be odom, but that causes extrapolation errors, see:
+  # https://answers.ros.org/question/357836/nav2-teb-lookup-would-require-extrapolation-into-the-future/
+  # https://answers.ros.org/question/40541/extrapolation-error-of-local-cost-map-in-navigation/?answer=121776#post-id-121776
+  # https://answers.ros.org/question/164911/move_base-and-extrapolation-errors-into-the-future/
+  # https://github.com/ros-planning/navigation/issues/196
+
   robot_base_frame: base_link
 
-# https://answers.ros.org/question/369769/update_frequency-vs-publish_frequency-costmap-parameters/
-#  update_frequency: 5
-#  publish_frequency: 2.0
+  # https://answers.ros.org/question/369769/update_frequency-vs-publish_frequency-costmap-parameters/
+  update_frequency: 5
+  publish_frequency: 2.0
 
   static_map: false
   rolling_window: true
-  width: 3.0
-  height: 3.0
+  width: 5.0
+  height: 5.0
   resolution: 0.025

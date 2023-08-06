@@ -1,3 +1,9 @@
+# Base parameters
+
+controller_frequency: 5
+planner_frequency: 5
+
+
 # https://wiki.ros.org/base_local_planner#TrajectoryPlannerROS
 TrajectoryPlannerROS:
 #  max_vel_trans: 0.05
@@ -29,15 +35,13 @@ TrajectoryPlannerROS:
   # 
   sim_time: 4.0
 
-# Modified to stop corner cutting!
-# Turning the path_distance_bias parameter up will make the robot follow the path more closely at the expense of moving towards the goal quickly. If this weight is set too high, the robot will refuse to move because the cost of moving is greater than staying at its location on the path.
-# The weighting for how much the controller should stay close to the path it was given
+  # Modified to stop corner cutting!
+  # Turning the path_distance_bias parameter up will make the robot follow the path more closely at the expense of moving towards the goal quickly. If this weight is set too high, the robot will refuse to move because the cost of moving is greater than staying at its location on the path.
+  # The weighting for how much the controller should stay close to the path it was given
   path_distance_bias: 0.6 # (double, default: 0.6)
-# The weighting for how much the controller should attempt to reach its local goal, also controls speed
+  # The weighting for how much the controller should attempt to reach its local goal, also controls speed
   goal_distance_bias: 0.8 # (double, default: 0.8)
 
-# Slow down controller as described here: http://zdome.net/wiki/index.php/Navigation_Tuning
+  # Slow down controller as described here: http://zdome.net/wiki/index.php/Navigation_Tuning
   controller_frequency: 5 # Default 20
-
-planner_frequency: 5
 

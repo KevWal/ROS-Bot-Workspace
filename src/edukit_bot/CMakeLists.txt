@@ -10,6 +10,8 @@ project(edukit_bot)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
+  roscpp
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -136,6 +138,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/edukit_bot_node.cpp)
+add_executable(odom_to_tf_node src/odom_to_tf.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -152,6 +155,9 @@ include_directories(
 #   ${catkin_LIBRARIES}
 #   ${python3-gpiozero_LIBRARIES}
 # )
+target_link_libraries(odom_to_tf_node
+    ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
