@@ -1,6 +1,7 @@
 #!/bin/sh
 
-~/edukit_bot_ws/src/edukit_bot/src/lidar_onoff &
+# Turn USB port power on
+sudo uhubctl --action on -l 2
 
 sleep 6
 
