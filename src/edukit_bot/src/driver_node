@@ -17,7 +17,7 @@ import warnings
 # PID values
 KP = 10 # Proportional
 KD = 0.1 # Previous error
-KI = 0.5 # Long term error
+KI = 0.7 # Long term error
 
 def _clip(value, minimum, maximum):
     """Ensure value is between minimum and maximum."""
@@ -99,10 +99,10 @@ class Motor:
         # Set motor speed
         pwm.setDutycycle(self._pwm_pin, duty_cycle)
 
-        print("Mtr: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.3f}, ticks {: 3.0f}, " \
-            "ac spd {: 0.3f}, err {: 0.3f}, prv err {: 0.3f}, sum err {: 0.3f}, new pwr {: 0.2f}, " \
-            " new duty {:2.0f}".format(self._pwm_pin, self._rate, requested_speed, ticks, actual_speed, \
-            error, self._prev_error, self._sum_error, self.power, duty_cycle))
+        #print("Mtr: pin {:0.0f}, rate {:0.0f}, req'ed spd {: 0.3f}, ticks {: 3.0f}, " \
+        #    "ac spd {: 0.3f}, err {: 0.3f}, prv err {: 0.3f}, sum err {: 0.3f}, new pwr {: 0.2f}, " \
+        #    " new duty {:2.0f}".format(self._pwm_pin, self._rate, requested_speed, ticks, actual_speed, \
+        #    error, self._prev_error, self._sum_error, self.power, duty_cycle))
 
         # Record errors for next iteration
         self._prev_error = error
@@ -110,7 +110,7 @@ class Motor:
 
         # Check our motor is not stalled
         # Is our motor speed significantly behind where it should be?
-        if abs(self._sum_error) > abs(requested_speed) * 5:
+        if abs(self._sum_error) > abs(requested_speed) * 10:
             # And is it continuing to get further behind?
             # x*y > 0 evaluates to True if both numbers have the same sign
             if error * self._sum_error > 0:
@@ -119,7 +119,7 @@ class Motor:
                 rospy.loginfo("%s Motor %d now seems to be unstalled!" % (rospy.get_name(), self._pwm_pin))
 
         # No point letting _sum_error get too large if motor is stalled for example
-        self._sum_error = _clip(self._sum_error, 0 - abs(requested_speed * 10), abs(requested_speed * 10))
+        self._sum_error = _clip(self._sum_error, 0 - abs(requested_speed * 15), abs(requested_speed * 15))
 
 
 class Driver:
@@ -153,10 +153,9 @@ class Driver:
         self._last_received = rospy.get_time()
 
         # Extract linear and angular velocities from the message
-        self._linear = _clip(message.linear.x, -self._max_speed, self._max_speed)
-        # TODO Add _max_angular parameter if we feel we need to
+        #self._linear = _clip(message.linear.x, -self._max_speed, self._max_speed)
         #self._angular = _clip(message.angular.z, -self._max_angular, self._max_angular)
-        #self._linear = message.linear.x
+        self._linear = message.linear.x
         self._angular = message.angular.z
 
         # print("Twist: Linear {: 0.2f}, Angular {: 0.2f}".format(self._linear, self._angular))
@@ -164,6 +163,19 @@ class Driver:
         # Calculate wheel speeds in m/s
         self._left_speed = self._linear - self._angular * self._wheel_base / 2
         self._right_speed = self._linear + self._angular * self._wheel_base / 2
+
+        #print("Twist: Linear {: 0.2f}, Angular {: 0.2f},  L {: 0.3f},  R, {: 0.3f}".format(self._linear, \
+        #    self._angular, self._left_speed, self._right_speed))
+
+        # If requested speed for either motor is above our maximum speed, then scale both speeds down
+        # Works for positive and negative speeds and combinations of both
+        if abs(self._left_speed) > self._max_speed or abs(self._right_speed) > self._max_speed:
+            self._left_speed = self._left_speed * (self._max_speed / max(abs(self._left_speed), abs(self._right_speed)))
+            self._right_speed = self._right_speed * (self._max_speed / max(abs(self._left_speed), abs(self._right_speed)))
+
+        #print("Twist: Linear {: 0.2f}, Angular {: 0.2f}, CL {: 0.3f}, CR, {: 0.3f}".format(self._linear, \
+        #    self._angular, self._left_speed, self._right_speed))
+
 
     def run(self):
         """The control loop of the driver."""

@@ -3,9 +3,9 @@ recovery_behavior_enabled: true
 
 recovery_behaviors:
   - {name: conservative_reset, type: clear_costmap_recovery/ClearCostmapRecovery}
-  - {name: stepback_and_steerturn_recovery, type: stepback_and_steerturn_recovery/StepBackAndSteerTurnRecovery}
-  - {name: second_conservative_reset, type: clear_costmap_recovery/ClearCostmapRecovery}
   - {name: rotate_recovery, type: rotate_recovery/RotateRecovery}
+  - {name: second_conservative_reset, type: clear_costmap_recovery/ClearCostmapRecovery}
+  - {name: stepback_and_steerturn_recovery, type: stepback_and_steerturn_recovery/StepBackAndSteerTurnRecovery}
   - {name: aggressive_reset, type: clear_costmap_recovery/ClearCostmapRecovery}
 
 stepback_and_steerturn_recovery:
