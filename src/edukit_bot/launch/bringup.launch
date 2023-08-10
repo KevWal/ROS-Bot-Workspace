@@ -13,10 +13,9 @@
 <!-- Traditional odom_node / gmapping / move_base / explore_lite Navigation Stack -->
   <arg name="gmapnav" default="false"/>
 <!-- Hector / move_base / explore_lite Navigation Stack -->
-  <arg name="hectornav" default="true"/>
-
-<!-- Navigate robot using laser_scan_matcher and move_base -->
-  <arg name="laser_move_base" default="false"/>
+  <arg name="hectornav" default="false"/>
+<!-- Navigate robot using hector, AMCL and and move_base -->
+  <arg name="amclhectornav" default="true"/>
 
 
 <!-- Custom log level config -->
@@ -90,7 +89,7 @@
     <param name="pub_map_scanmatch_transform" value="false"/>
     <param name="pub_map_odom_transform" value="true"/>
     <param name="map_frame" value="map" />
-    <param name="base_frame" value="base_link" />
+    <!-- <param name="base_frame" value="base_link" /> default so can be removed once tested -->
     <param name="odom_frame" value="base_link" />
   </node>
 
@@ -98,7 +97,7 @@
 </group>
 
 
-<!-- Navigation -->
+<!-- Navigation using existing Map and AMCL-->
 <!-- http://wiki.ros.org/navigation/Tutorials/RobotSetup -->
 <group if="$(arg navigation_stack)">
   <!-- Odomotry Node -->
@@ -188,11 +187,11 @@
   <!-- Hector Mapping -->
   <!-- Subscribes to /scan -->
   <!-- Publishes /map (nav_msgs/OccupancyGrid), /scanmatch_odom, and map frame to odom frame Transformation -->
-  <!-- <remap from="scanmatch_odom" to="odom" /> --> <!-- A: move_base local planner needs a /odom topic. either use hector's, or -->
+  <!-- <remap from="scanmatch_odom" to="odom" /> --> <!-- move_base local planner needs a /odom topic. either A: use hector's, or -->
   <node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" respawn="true" output="screen" >
     <param name="pub_map_odom_transform" value="true"/>
     <param name="pub_odometry" value="true"/>
-    <param name="base_frame" value="base_link"/>
+    <!-- <param name="base_frame" value="base_link"/> default so can be removed once tested -->
     <!-- <param name="odom_frame" value="base_link"/> --> <!-- 1: Either need to map straight from map to base_link, or -->
     <param name="pub_map_scanmatch_transform" value="false"/>
     <!-- <param name="pub_debug_output" value="true"/> --> <!-- Debug -->
@@ -211,7 +210,7 @@
   <node pkg ="tf" type="static_transform_publisher" name="static_odom_to_base_link" args="0.0 0.0 0.0 0.0 0.0 0.0 /odom /base_link 50"/>
 
   <!-- 3: Take hector /slam_out_pose and convert it to a tf from odom to base_link -->
-  <!-- Needed if not using static Tf for odom to base_link -->
+  <!-- Needed if not using static Tf for odom to base_link, or going straight from map to base_link -->
   <!-- <node pkg="edukit_bot" type="odom_to_tf_node" name="odom_to_tf" respawn="true" output="screen" /> -->
 
   <!-- Move Base -->
@@ -231,60 +230,51 @@
   <node pkg="explore_lite" type="explore" name="explore" respawn="true" output="screen">
       <rosparam file="$(find edukit_bot)/param/explore_lite.yaml" command="load" />
   </node>
-
 </group>
 
 
-<!-- Localisaion and Navigation -->
-<group if="$(arg laser_move_base)">
-  <!-- Odomotry Node -->
-  <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
-  <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom and child_frame_id base_link -->
-  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >
-    <param name="odom_publish_tf" value="false" />
-  </node>
-
+<!-- AMCL and Hector Navigation -->
+<group if="$(arg amclhectornav)">
   <!-- Map Server -->
   <!-- Publishes /map and /map_metadata with frame_id map -->
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find edukit_bot)/map/loft_map_2.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find edukit_bot)/map/loft_map_3.yaml"/>
 
-  <!-- Laser Scan Matcher -->
-  <!-- Subscribes to /scan (sensor_msgs/LaserScan), /imu (sensor_msgs/IMU) and /odom -->
-  <!-- Publishes TF for odom to base_link frames and /pose2D (geometry_msgs/Pose2D)-->
-  <!-- Publishes Fake odom to /XXX -->
-  <!-- https://github.com/benjaminnarin/laser_scan_matcher_odom -->
-  <node pkg="laser_scan_matcher_odom" type="laser_scan_matcher_odom_node" name="laser_scan_matcher_odom_node" output="screen">
-    <param name="fixed_frame" value="odom" />
-    <param name="base_frame" value="base_link" />
-
-    <param name="use_imu" value = "false" /> <!-- /imu -->
-    <param name="use_odom" value = "true" /> <!-- /odom -->
-    <param name="use_alpha_beta" value = "true" /> 
-
-    <param name="publish_tf" value = "true" />
-    <param name="publish_pose" value = "true" />
-    <param name="publish_vel" value = "false" /> <!-- Odom -->
+  <!-- Hector Mapping -->
+  <!-- Subscribe to /scan, Publish /odom -->
+  <remap from="scanmatch_odom" to="odom" /> <!-- We want hector's odom topic for move_base -->
+  <remap from="map" to="hector_map" /> <!-- We dont want hector's map -->
+  <node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" respawn="true" output="screen" >
+    <param name="pub_map_odom_transform" value="true"/> <!-- reworked to odom base_link transform below -->
+    <param name="map_frame" value="odom"/> <!-- Use hector to publish odom to base_link transform -->
+    <param name="odom_frame" value="base_link"/>
+    <param name="base_frame" value="base_link"/>
+    <param name="pub_odometry" value="true"/>
+    <param name="pub_map_scanmatch_transform" value="false"/>
   </node>
-
-<!--  <node pkg ="tf" type="static_transform_publisher" name="static_map_to_odom" args="0.0 0.0 0.0 0.0 0.0 0.0 /map /odom 50"/> -->
-<!--  <node pkg ="tf" type="static_transform_publisher" name="static_odom_to_base_link" args="0.0 0.0 0.0 0.0 0.0 0.0 /odom /base_link 50"/>  -->
 
   <!-- AMCL - track the pose of the robot against a known map-->
   <!-- Subscribes to /scan (sensor_msgs/LaserScan), /tf (tf/tfMessage) and /map (nav_msgs/OccupancyGrid) -->
   <!-- Publishes TF for map to odom frames -->
-  <include file="$(find edukit_bot)/launch/amcl_diff.launch" />
+  <include file="$(find edukit_bot)/launch/hector_amcl_diff.launch" />
 
-  <!-- Move Base Navigation -->
-  <!-- Subscribes to TF, /odom, /map and /scan -->
-  <!-- Publishes /cmd_vel -->
-  <!-- <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
-    <rosparam file="$(find edukit_bot)/param/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+  <!-- Move Base -->
+  <node pkg="move_base" type="move_base" name="move_base" respawn="true" output="screen">
+    <param name="base_global_planner" value="navfn/NavfnROS"/>
+    <!-- <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>   -->
+    <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/>
+    <rosparam file="$(find edukit_bot)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find edukit_bot)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find edukit_bot)/param/local_costmap_params.yaml" command="load" />
-    <rosparam file="$(find edukit_bot)/param/global_costmap_params.yaml" command="load" /> 
-    <rosparam file="$(find edukit_bot)/param/base_local_planner_params.yaml" command="load" />
-  </node> -->
+    <rosparam file="$(find edukit_bot)/param/global_costmap_params_rolling.yaml" command="load" />
+    <rosparam file="$(find edukit_bot)/param/base_and_local_planner_params.yaml" command="load" />
+    <rosparam file="$(find edukit_bot)/param/recovery_params.yaml" command="load" />
+  </node>
 
+  <!-- Explore Lite -->
+  <node pkg="explore_lite" type="explore" name="explore" respawn="true" output="screen">
+      <rosparam file="$(find edukit_bot)/param/explore_lite.yaml" command="load" />
+  </node>
 </group>
+
 
 </launch>

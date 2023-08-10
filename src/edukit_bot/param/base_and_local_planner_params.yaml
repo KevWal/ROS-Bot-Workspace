@@ -28,6 +28,9 @@ TrajectoryPlannerROS:
 
   holonomic_robot: false
 
+  oscillation_reset_dist: 0.25 # How far the robot must travel in meters before oscillation flags are reset (double, default: 0.05)
+  oscillation_timeout: 15 # Seconds, default 0 (infinite)
+
   # https://wiki.ros.org/navigation/Tutorials/Navigation%20Tuning%20Guide
   # If Acceleration limits low then set dwa to false
   dwa: true # Whether to use the Dynamic Window Approach (DWA)_ or whether to use Trajectory Rollout

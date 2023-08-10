@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!-- Called from bringup.launch -->
+
+<launch>
+<node pkg="amcl" type="amcl" name="amcl" output="screen">
+  <param name="odom_model_type" value="diff"/>
+  <param name="gui_publish_rate" value="5.0"/>
+
+  <param name="min_particles" value="500"/>
+  <param name="max_particles" value="5000"/>
+
+  <param name="kld_err" value="0.05"/>
+  <param name="kld_z" value="0.99"/>
+
+<!-- odom_alpha1 (0.2) expected noise in odom rotation estimate. -->
+<!-- odom_alpha2 (0.2) expected noise in odometry's rotation estimate from translational component. -->
+<!-- odom_alpha3 (0.2) expected noise in odometry's translation estimate. -->
+<!-- odom_alpha4 (0.2) expected noise in odometry's translation estimate from the rotational component. -->
+  <param name="odom_alpha1" value="0.2"/>
+  <param name="odom_alpha2" value="0.2"/>
+  <param name="odom_alpha3" value="0.2"/>
+  <param name="odom_alpha4" value="0.2"/>
+
+  <param name="laser_model_type" value="likelihood_field_prob"/>
+  <!-- <param name="laser_model_type" value="beam"/> -->
+
+<!-- likelihood_field model uses only z_hit and z_rand -->
+<!-- If you expect a lot of unmodelled obstacles in your environment (meaning obstacles not in the map like people), then you should increase "rand" contribution. Otherwise, if your environment is very static and all obstacles are represented in the map, the you can almost remove the "rand" part. -->
+  <param name="laser_z_hit" value="0.6"/> <!-- default 0.95, but examples 0.5 -->
+  <param name="laser_z_rand" value="0.4"/> <!-- default 0.05, but examples 0.5 -->
+
+<!-- These two not used with likelihood_field model -->
+  <param name="laser_z_short" value="0.05"/>
+  <param name="laser_z_max" value="0.05"/>
+
+  <param name="laser_max_beams" value="100"/>
+
+  <param name="laser_sigma_hit" value="0.2"/>
+  <param name="laser_lambda_short" value="0.1"/>
+  <param name="laser_likelihood_max_dist" value="2.0"/>
+
+<!-- movement required before performing a filter update -->
+  <param name="update_min_d" value="0.05"/>
+  <param name="update_min_a" value="0.19625"/> <!-- 1/32nd of a cricle - Default 0.52 radians -->
+
+  <param name="odom_frame_id" value="odom"/>
+  <param name="base_frame_id" value="base_link"/>
+
+  <param name="resample_interval" value="1"/>
+  <param name="transform_tolerance" value="0.2"/>  <!-- Default 0.1, increased to stop extrapolation Errors -->
+
+  <param name="recovery_alpha_slow" value="0.001"/>
+  <param name="recovery_alpha_fast" value="0.1"/>
+
+  <param name="selective_resampling" value="true"/>
+</node>
+</launch>

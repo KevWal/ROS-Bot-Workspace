@@ -5,8 +5,16 @@ recovery_behaviors:
   - {name: conservative_reset, type: clear_costmap_recovery/ClearCostmapRecovery}
   - {name: rotate_recovery, type: rotate_recovery/RotateRecovery}
   - {name: second_conservative_reset, type: clear_costmap_recovery/ClearCostmapRecovery}
+  - {name: move_slow_and_clear, type: move_slow_and_clear/MoveSlowAndClear}
+  - {name: third_conservative_reset, type: clear_costmap_recovery/ClearCostmapRecovery}
   - {name: stepback_and_steerturn_recovery, type: stepback_and_steerturn_recovery/StepBackAndSteerTurnRecovery}
   - {name: aggressive_reset, type: clear_costmap_recovery/ClearCostmapRecovery}
+
+move_slow_and_clear:
+    clearing_distance: 0.5
+    limited_trans_speed: 0.03
+    limited_rot_speed: 0.2
+    planner_namespace: "DWAPlannerROS"
 
 stepback_and_steerturn_recovery:
     # true if you only want the first turn
