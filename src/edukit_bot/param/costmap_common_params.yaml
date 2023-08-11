@@ -12,8 +12,8 @@ laser_scan_sensor: {sensor_frame: base_laser, data_type: LaserScan, topic: scan,
 # https://answers.ros.org/question/329009/what-is-the-mean-of-transform_tolerance-param/
 transform_tolerance: 0.2 # Default 0.2s
 
-controller_frequency: 5
+controller_frequency: 10
 
-publish_frequency: 5
+publish_frequency: 2
 
 resolution: 0.025
