@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+?xml version="1.0"?>
 <launch>
 
 <!-- Everything launched / included from here - bringup.launch -->
@@ -13,9 +13,9 @@
 <!-- Traditional odom_node / gmapping / move_base / explore_lite Navigation Stack -->
   <arg name="gmapnav" default="false"/>
 <!-- Hector / move_base / explore_lite Navigation Stack -->
-  <arg name="hectornav" default="false"/>
+  <arg name="hectornav" default="true"/>
 <!-- Navigate robot using hector, AMCL and and move_base -->
-  <arg name="amclhectornav" default="true"/>
+  <arg name="amclhectornav" default="false"/>
 
 
 <!-- Custom log level config -->
@@ -111,7 +111,7 @@
 
   <!-- Map Server -->
   <!-- Publishes /map and /map_metadata with frame_id map -->
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find edukit_bot)/map/loft_map_3.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find edukit_bot)/map/loft_map_4.yaml"/>
 
   <!-- AMCL - track the pose of the robot against a known map-->
   <!-- Subscribes to /scan (sensor_msgs/LaserScan), /tf (tf/tfMessage) and /map (nav_msgs/OccupancyGrid) -->
@@ -187,10 +187,10 @@
   <!-- Hector Mapping -->
   <!-- Subscribes to /scan -->
   <!-- Publishes /map (nav_msgs/OccupancyGrid), /scanmatch_odom, and map frame to odom frame Transformation -->
-  <!-- <remap from="scanmatch_odom" to="odom" /> --> <!-- move_base local planner needs a /odom topic. either A: use hector's, or -->
+  <remap from="scanmatch_odom" to="odom" /> <!-- move_base local planner needs a /odom topic. either A: use hector's, or -->
   <node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" respawn="true" output="screen" >
     <param name="pub_map_odom_transform" value="true"/>
-    <param name="pub_odometry" value="true"/>
+    <param name="pub_odometry" value="true"/> <!-- Publishes to /scanmatch_odom unless remapped -->
     <!-- <param name="base_frame" value="base_link"/> default so can be removed once tested -->
     <!-- <param name="odom_frame" value="base_link"/> --> <!-- 1: Either need to map straight from map to base_link, or -->
     <param name="pub_map_scanmatch_transform" value="false"/>
@@ -202,9 +202,9 @@
   <!-- Odomotry Node -->
   <!-- Subscribes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
   <!-- Publishes /odom (nav_msgs/Odometry) with frame_id odom -->
-  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" > <!-- B: use odom_node's -->
-    <param name="odom_publish_tf" value="false" />
-  </node>
+  <!-- <node pkg="edukit_bot" type="odom_node" name="odom" output="screen" >  --> <!-- B: use odom_node's -->
+  <!--  <param name="odom_publish_tf" value="false" />
+  </node> -->
 
   <!-- 2: Static Transform for odom to base_link frames, or -->
   <node pkg ="tf" type="static_transform_publisher" name="static_odom_to_base_link" args="0.0 0.0 0.0 0.0 0.0 0.0 /odom /base_link 50"/>
@@ -214,17 +214,17 @@
   <!-- <node pkg="edukit_bot" type="odom_to_tf_node" name="odom_to_tf" respawn="true" output="screen" /> -->
 
   <!-- Move Base -->
-  <node pkg="move_base" type="move_base" name="move_base" respawn="true" output="screen">
-    <param name="base_global_planner" value="navfn/NavfnROS"/>
+  <!-- <node pkg="move_base" type="move_base" name="move_base" respawn="true" output="screen">
+    <param name="base_global_planner" value="navfn/NavfnROS"/> -->
     <!-- <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>   -->
-    <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/>
+    <!-- <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/>
     <rosparam file="$(find edukit_bot)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find edukit_bot)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find edukit_bot)/param/local_costmap_params.yaml" command="load" />
     <rosparam file="$(find edukit_bot)/param/global_costmap_params_rolling.yaml" command="load" />
     <rosparam file="$(find edukit_bot)/param/base_and_local_planner_params.yaml" command="load" />
     <rosparam file="$(find edukit_bot)/param/recovery_params.yaml" command="load" />
-  </node>
+  </node> -->
 
   <!-- Explore Lite -->
   <node pkg="explore_lite" type="explore" name="explore" respawn="true" output="screen">
@@ -237,7 +237,7 @@
 <group if="$(arg amclhectornav)">
   <!-- Map Server -->
   <!-- Publishes /map and /map_metadata with frame_id map -->
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find edukit_bot)/map/loft_map_3.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find edukit_bot)/map/loft_map_4.yaml"/>
 
   <!-- Hector Mapping -->
   <!-- Subscribe to /scan, Publish /odom -->
