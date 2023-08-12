@@ -1,4 +1,4 @@
-?xml version="1.0"?>
+<?xml version="1.0"?>
 <launch>
 
 <!-- Everything launched / included from here - bringup.launch -->
@@ -13,9 +13,9 @@
 <!-- Traditional odom_node / gmapping / move_base / explore_lite Navigation Stack -->
   <arg name="gmapnav" default="false"/>
 <!-- Hector / move_base / explore_lite Navigation Stack -->
-  <arg name="hectornav" default="true"/>
+  <arg name="hectornav" default="false"/>
 <!-- Navigate robot using hector, AMCL and and move_base -->
-  <arg name="amclhectornav" default="false"/>
+  <arg name="amclhectornav" default="true"/>
 
 
 <!-- Custom log level config -->
@@ -214,17 +214,17 @@
   <!-- <node pkg="edukit_bot" type="odom_to_tf_node" name="odom_to_tf" respawn="true" output="screen" /> -->
 
   <!-- Move Base -->
-  <!-- <node pkg="move_base" type="move_base" name="move_base" respawn="true" output="screen">
-    <param name="base_global_planner" value="navfn/NavfnROS"/> -->
+  <node pkg="move_base" type="move_base" name="move_base" respawn="true" output="screen">
+    <param name="base_global_planner" value="navfn/NavfnROS"/>
     <!-- <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>   -->
-    <!-- <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/>
+    <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/>
     <rosparam file="$(find edukit_bot)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find edukit_bot)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find edukit_bot)/param/local_costmap_params.yaml" command="load" />
     <rosparam file="$(find edukit_bot)/param/global_costmap_params_rolling.yaml" command="load" />
     <rosparam file="$(find edukit_bot)/param/base_and_local_planner_params.yaml" command="load" />
     <rosparam file="$(find edukit_bot)/param/recovery_params.yaml" command="load" />
-  </node> -->
+  </node>
 
   <!-- Explore Lite -->
   <node pkg="explore_lite" type="explore" name="explore" respawn="true" output="screen">
@@ -258,18 +258,18 @@
   <include file="$(find edukit_bot)/launch/hector_amcl_diff.launch" />
 
   <!-- Move Base -->
-  <!-- <node pkg="move_base" type="move_base" name="move_base" respawn="true" output="screen">
-    <param name="base_global_planner" value="navfn/NavfnROS"/> -->
-    <!-- <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>   -->
+  <node pkg="move_base" type="move_base" name="move_base" respawn="true" output="screen">
+    <param name="base_global_planner" value="navfn/NavfnROS"/>
+    <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
     <!-- <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/> -->
-    <!-- <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
+    <!-- <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" /> -->
     <rosparam file="$(find edukit_bot)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find edukit_bot)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find edukit_bot)/param/local_costmap_params.yaml" command="load" />
     <rosparam file="$(find edukit_bot)/param/global_costmap_params_rolling.yaml" command="load" />
     <rosparam file="$(find edukit_bot)/param/base_and_local_planner_params.yaml" command="load" />
     <rosparam file="$(find edukit_bot)/param/recovery_params.yaml" command="load" />
-  </node> -->
+  </node>
 
   <!-- Explore Lite -->
   <!--<node pkg="explore_lite" type="explore" name="explore" respawn="true" output="screen">
