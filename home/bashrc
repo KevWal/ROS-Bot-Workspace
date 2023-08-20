@@ -118,6 +118,6 @@ fi
 
 # Setup ROS environment
 source /opt/ros/noetic/setup.bash
-source /home/pi/edukit_bot_ws/devel/setup.sh
+source /home/pi/edukit_bot_ws/devel/setup.bash
 export ROS_MASTER_URI="http://pi-ros-kev.local:11311"
 export ROS_IP="pi-ros-kev.local"

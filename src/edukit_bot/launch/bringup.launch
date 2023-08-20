@@ -4,19 +4,13 @@
 <!-- Everything launched / included from here - bringup.launch -->
 
 <!-- Set only one of these to true -->
-<!-- Test Odom transformation -->
-  <arg name="test_odom" default="false"/>
-<!-- Create map using hector_mapping -->
-  <arg name="hector_mapping" default="false"/>
-<!-- Traditional odom_node / AMCL / move_base Navigation Stack -->
-  <arg name="navigation_stack" default="false"/>
-<!-- Traditional odom_node / gmapping / move_base / explore_lite Navigation Stack -->
-  <arg name="gmapnav" default="false"/>
-<!-- Hector / move_base / explore_lite Navigation Stack -->
-  <arg name="hectornav" default="false"/>
-<!-- Navigate robot using hector, AMCL and and move_base -->
-  <arg name="amclhectornav" default="true"/>
-
+  <arg name="test_odom" default="false"/>  <!-- Test Odom transformation -->
+  <arg name="hector_mapping" default="false"/> <!-- Create map using hector_mapping -->
+  <arg name="navigation_stack" default="false"/>  <!-- Traditional odom_node, map_server, AMCL & move_base Nav stack -->
+  <arg name="gmapnav" default="false"/>  <!-- Traditional odom_node, gmapping & move_base Nav stack -->
+  <arg name="hectornav" default="false"/> <!-- Hector for Map + Odom & move_base Nav stack -->
+  <arg name="amclhectornav" default="false"/>  <!-- Hector for Odom, map_server, AMCL and and move_base Nav stack-->
+  <arg name="cartographer" default="true"/>  <!-- Google Cartographer -->
 
 <!-- Custom log level config -->
 <env name="ROSCONSOLE_CONFIG_FILE"
@@ -33,16 +27,14 @@
   </node>
 
 <!-- Joystick to Twist Node -->
-<!-- Subscribes /joy (sensor_msgs/Joy) -->
-<!-- Publishes /cmd_vel (geometry_msgs/Twist) -->
+<!-- Subscribes /joy (sensor_msgs/Joy) & Publishes /cmd_vel (geometry_msgs/Twist) -->
   <node pkg="teleop_twist_joy" type="teleop_node" name="joystick_to_twist" output="screen">
     <param name="scale_linear" value="0.05" /> <!-- in meters/sec -->
     <param name="scale_angular" value="0.314" /> <!-- in radians/sec -->
   </node>
 
 <!-- Motor Driver Node -->
-<!-- Subscribes /cmd_vel (geometry_msgs/Twist) -->
-<!-- Publishes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
+<!-- Subscribes /cmd_vel (geometry_msgs/Twist) & Publishes /lwheel_ticks and /rwheel_ticks (std_msgs/Int32) -->
   <node pkg="edukit_bot" type="driver_node" name="driver" output="screen" />
 
 <!-- Lidar Node -->
@@ -70,7 +62,7 @@
     <param name="odom_publish_tf" value="true" />
   </node>
 
-  <!-- Fake odom option with tf direct from twist messages -->
+  <!-- Fake odom option with map > odom tf direct from twist messages -->
   <!-- <node pkg="fake_odom" type="fake_odom_node_tf" name="fake_odom_node_tf" output="screen" /> -->
 
   <!-- Static Transform for map to odom frames -->
@@ -78,13 +70,13 @@
 </group>
 
 
-<!-- Hector Mapping -->
+<!-- Hector based map creation -->
 <group if="$(arg hector_mapping)">
   <!-- Hector Mapping -->
   <!-- Subscribes to /scan -->
   <!-- Publishes /map (nav_msgs/OccupancyGrid), and map frame to base_link frame Transformation -->
   <!-- No Odom frame needed, no scanmatcher frame needed:  -->
-  <!-- http://wiki.ros.org/hector_slam/Tutorials/SettingUpForYourRobot#Use_without_odom_frame -->
+    <!-- http://wiki.ros.org/hector_slam/Tutorials/SettingUpForYourRobot#Use_without_odom_frame -->
   <node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" output="screen">
     <param name="pub_map_scanmatch_transform" value="false"/>
     <param name="pub_map_odom_transform" value="true"/>
@@ -182,7 +174,7 @@
 </group>
 
 
-<!-- Hector Navigation -->
+<!-- Hector Navigation Build Map-->
 <group if="$(arg hectornav)">
   <!-- Hector Mapping -->
   <!-- Subscribes to /scan -->
@@ -233,7 +225,7 @@
 </group>
 
 
-<!-- AMCL and Hector Navigation -->
+<!-- AMCL and Hector Navigation Existing Map -->
 <group if="$(arg amclhectornav)">
   <!-- Map Server -->
   <!-- Publishes /map and /map_metadata with frame_id map -->
@@ -277,5 +269,28 @@
   </node>-->
 </group>
 
+
+<!-- Google Cartographer -->
+<group if="$(arg cartographer)">
+
+  <!-- Odomotry Node -->
+  <!-- Subscribes /lwheel_ticks and /rwheel_ticks & Publishes /odom with frame_id odom -->
+  <node pkg="edukit_bot" type="odom_node" name="odom" output="screen">
+    <param name="odom_publish_tf" value="false" />
+  </node> 
+
+
+  <remap from="/imu" to="/imu/data"/>
+  <node name="cartographer_node" pkg="cartographer_ros" type="cartographer_node" args="
+          -configuration_directory $(find edukit_bot)/param/
+          -configuration_basename backpack_2d.lua"
+      output="screen">
+  </node>
+
+  <node name="cartographer_occupancy_grid_node" pkg="cartographer_ros"
+      type="cartographer_occupancy_grid_node" args="-resolution 0.05" />
+
+
+</group>
 
 </launch>
