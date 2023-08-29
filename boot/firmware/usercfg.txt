@@ -4,6 +4,8 @@
 
 dtoverlay=gpio-fan,gpiopin=19,temp=45000
 
-dtoverlay=rotary-encoder,pin_a=23,pin_b=22,relative_axis=1,steps-per-period=1
-dtoverlay=rotary-encoder,pin_a=24,pin_b=25,relative_axis=1,steps-per-period=1
+#dtoverlay=rotary-encoder,pin_a=23,pin_b=22,relative_axis=1,steps-per-period=1
+#dtoverlay=rotary-encoder,pin_a=24,pin_b=25,relative_axis=1,steps-per-period=1
+
+hdmi_force_hotplug=1
 
